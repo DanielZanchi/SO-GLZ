@@ -1,0 +1,415 @@
+/*
+ * piano0_client.c
+ *
+ *  Created on: 08 giu 2016
+ */
+
+#include <unistd.h> /* write, lseek, close, exit */
+#include <sys/stat.h> /*open */
+#include <fcntl.h> /*open*/
+#include <stdio.h>
+#include <stdlib.h>
+#include <sys/socket.h>
+#include <sys/un.h>   /*  Per socket AF_UNIX */
+#include <time.h>
+#include <string.h>
+#include <errno.h>
+
+#include "persona.h"
+#include "linkedList.h"
+
+#define DEFAULT_PROTOCOL 0
+#define DURATA_MAX_MINUTI 5
+
+static const int CONNESSIONE_PIANO_CLIENT = 1;
+static const int CONNESSIONE_ASCENSORE = 0;
+
+static const char* NOME_SOCKET_PIANO[4] = { "piano0.sock", "piano1.sock",
+		"piano2.sock", "piano3.sock" };
+static const char* NOME_FILE_INPUT[4] =
+		{ "piano0", "piano1", "piano2", "piano3" };
+static const char* NOME_FILE_LOG[4] = { "piano0.log", "piano1.log",
+		"piano2.log", "piano3.log" };
+time_t tempo_avvio;
+time_t tempo_terminazione;
+int numero_piano;
+
+enum terminazione {
+	cinque_minuti, fine_servizio
+} terminazione = cinque_minuti;
+
+void invia_nel_socket(int SocketFd, const void* buffer, size_t dim) {
+	int scritto = write(SocketFd, buffer, dim);
+	if (scritto < dim) {
+		char* s;
+		asprintf(&s,
+				"Errore invio sul socket \"%s\", terminazione piano %i...\n",
+				NOME_SOCKET_PIANO[numero_piano], numero_piano);
+		perror(s);
+		exit(36);
+	}
+}
+
+void ricevi_dal_socket(int SocketFd, void* nuovo_arrivo, size_t dim) {
+	int letto = read(SocketFd, nuovo_arrivo, dim);
+	if (letto < 0) {
+		char* s;
+		asprintf(&s,
+				"Errore ricezione dal socket \"%s\", terminazione piano %i...\n",
+				NOME_SOCKET_PIANO[numero_piano], numero_piano);
+		perror(s);
+		exit(36);
+	}
+}
+
+void client() {
+	char* tipo = NULL;
+	char* tempo_generazione = NULL;
+	char* destinazione = NULL;
+	int tempo_generazione_num = 0;
+	int destinazione_num = 0;
+	FILE * inputFp = NULL;
+
+	printf("Eseguo client piano%i\n", numero_piano);
+
+	inputFp = fopen(NOME_FILE_INPUT[numero_piano], "r");
+
+	if (inputFp == NULL) {
+		char* s;
+		asprintf(&s,
+				"Impossibile aprire file di input \"%s\", terminazione client piano %i ",
+				NOME_FILE_INPUT[numero_piano], numero_piano);
+		perror(s);
+		exit(-3);
+	}
+	long int posizione = 0;
+
+	while (1) {
+		char* riga = NULL;
+		size_t len = 0;
+		int presente = 0;
+		int tempo;
+
+		//legge una riga dal file di input e genera la persona
+		//se la riga e' vuota, termina
+		getline(&riga, &len, inputFp);
+
+		if (strcmp(riga, "\n") == 0) {
+			printf(
+					"Raggiunta fine del file di input \"%s\", terminazione client piano %i\n",
+					NOME_FILE_INPUT[numero_piano], numero_piano);
+			break;
+		}
+
+		int SocketFd;
+		int SocketLenght;
+		struct sockaddr_un SocketAddress;
+		struct sockaddr* SocketAddrPtr;
+		SocketAddrPtr = (struct sockaddr*) &SocketAddress;
+		SocketLenght = sizeof(SocketAddress);
+
+		/* Create a UNIX socket, bidirectional, default protocol */
+		SocketFd = socket(AF_UNIX, SOCK_STREAM, DEFAULT_PROTOCOL);
+		if (SocketFd == -1) {
+			char* s;
+			asprintf(&s,
+					"Errore nella creazione del socket \"%s\", terminazione client piano %i ",
+					NOME_SOCKET_PIANO[numero_piano], numero_piano);
+			perror(s);
+			exit(76);
+		}
+
+		SocketAddress.sun_family = AF_UNIX; /* Set domain type */
+		strcpy(SocketAddress.sun_path, NOME_SOCKET_PIANO[numero_piano]); /* Set name */
+
+		int connesso = connect(SocketFd, SocketAddrPtr, SocketLenght);
+		if (connesso == -1) {
+			char* s;
+			asprintf(&s, "Client piano %i NON CONNESSO", numero_piano);
+			perror(s);
+			fclose(inputFp);
+			exit(35);
+		}
+		char* rigaTmp = riga;
+
+		tipo = strsep(&rigaTmp, " ");
+		tempo_generazione = strsep(&rigaTmp, " ");
+		destinazione = strsep(&rigaTmp, " ");
+
+		tempo_generazione_num = atoi(tempo_generazione);
+		destinazione_num = atoi(destinazione);
+
+		Persona persona = creaPersona(tipo[0], destinazione_num);
+		free(riga);
+		tempo = time(NULL);
+		sleep(tempo_generazione_num - (tempo - tempo_avvio));
+
+		invia_nel_socket(SocketFd, &CONNESSIONE_PIANO_CLIENT,
+				sizeof(CONNESSIONE_PIANO_CLIENT));
+
+		long unsigned dimensione = sizeof(persona);
+		//invia la persona
+		invia_nel_socket(SocketFd, &persona, dimensione);
+
+		//invia la lunghezza della stringa
+		dimensione = strlen(persona.nomeTipo) + 1;
+		invia_nel_socket(SocketFd, &dimensione, sizeof(dimensione));
+
+		//invia la stringa
+		invia_nel_socket(SocketFd, persona.nomeTipo, dimensione);
+
+		close(SocketFd);
+		if (tempo_terminazione <= time(NULL)) {
+			printf("Raggiunto limite temporale, terminazione client piano %i\n",
+					numero_piano);
+			break;
+		}
+	}
+
+	fclose(inputFp);
+}
+
+void server() {
+	lista_persone* coda = NULL;
+	nodo_lista_persone* testa = NULL;
+	coda = crea_lista_persone();
+
+	FILE* logFp = NULL;
+	Persona* nuovo_arrivo = NULL;
+	int connessione = -1;
+	time_t ora;
+
+	logFp = fopen(NOME_FILE_LOG[numero_piano], "w");
+
+	printf("Eseguo server piano%i\n", numero_piano);
+	if (logFp < 0) {
+		char* s;
+		asprintf(&s,
+				"Impossibile aprire file di log \"%s\", terminazione server piano %i...",
+				NOME_FILE_LOG[numero_piano], numero_piano);
+		perror(s);
+		exit(-3);
+	}
+	fprintf(logFp, "Avvio del piano: %s (%i)\n", ctime(&tempo_avvio),
+			(int) tempo_avvio);
+
+	unlink(NOME_SOCKET_PIANO[numero_piano]);
+	int SocketFd;
+	int SocketLenght;
+	struct sockaddr_un SocketAddress;
+	struct sockaddr* SocketAddrPtr;
+
+	SocketAddrPtr = (struct sockaddr*) &SocketAddress;
+	SocketLenght = sizeof(SocketAddress);
+
+	/* Create a UNIX socket, bidirectional, default protocol */
+	SocketFd = socket(AF_UNIX, SOCK_STREAM, DEFAULT_PROTOCOL);
+	if (SocketFd == -1) {
+		printf(
+				"Errore nella creazione del socket \"%s\", termnazione server piano %i...",
+				NOME_SOCKET_PIANO[numero_piano], numero_piano);
+		exit(-76);
+	}
+	SocketAddress.sun_family = AF_UNIX; /* Set domain type */
+	strcpy(SocketAddress.sun_path, NOME_SOCKET_PIANO[numero_piano]); /* Set name */
+	int result = bind(SocketFd, SocketAddrPtr, SocketLenght);
+	if (SocketFd == -1) {
+		printf(
+				"Errore nella bind del socket \"%s\", termnazione server piano %i...",
+				NOME_SOCKET_PIANO[numero_piano], numero_piano);
+		perror("");
+		exit(-76);
+	}
+	result = listen(SocketFd, 2);
+	if (SocketFd == -1) {
+		printf(
+				"Errore nella listen del socket \"%s\", termnazione server piano %i...",
+				NOME_SOCKET_PIANO[numero_piano], numero_piano);
+		perror("");
+		exit(-76);
+	}
+
+	while (1) {
+		int clientFd = accept(SocketFd, SocketAddrPtr, &SocketLenght);
+		if (clientFd == -1) {
+			perror("Errore nella connessione con i client");
+			printf("Terminazione server piano %i", numero_piano);
+			exit(5);
+		}
+		//ricevi_dal_socket(clientFd, &connessione, sizeof(connessione));
+		read(clientFd, &connessione, sizeof(connessione));
+
+		if (connessione == CONNESSIONE_PIANO_CLIENT) {// si e' connesso un piano-client
+			printf("Server piano %i, connessione piano client\n", numero_piano);
+
+			nuovo_arrivo = (Persona*) malloc(sizeof(Persona));
+			if (nuovo_arrivo == NULL) {
+				printf(
+						"Errore allocazione memoria per ricezione persona, terminazione server piano %i...",
+						numero_piano);
+				exit(37);
+			}
+
+			ricevi_dal_socket(clientFd, nuovo_arrivo, sizeof(Persona));
+
+			//legge lunghezza striga nomeTipo
+			long unsigned dimensione = 0;
+			ricevi_dal_socket(clientFd, &dimensione, sizeof(dimensione));
+
+			//legge stringa nomeTipo
+			nuovo_arrivo->nomeTipo = (char*) malloc(dimensione);
+			ricevi_dal_socket(clientFd, nuovo_arrivo->nomeTipo, dimensione);
+
+			aggiungi_alla_lista(coda, nuovo_arrivo);
+
+			ora = time( NULL);
+			int tempo_generazione = ora - tempo_avvio;
+
+			printf(
+					"[GENERATO] %s al piano %i, destinazione piano %i, tempo dall'avvio %i, %s\n",
+					nuovo_arrivo->nomeTipo, numero_piano,
+					nuovo_arrivo->destinazione, tempo_generazione, ctime(&ora));
+			fprintf(logFp,
+					"[GENERATO] %s, destinazione piano %i, tempo dall'avvio %i, %s\n",
+					nuovo_arrivo->nomeTipo, nuovo_arrivo->destinazione,
+					tempo_generazione, ctime(&ora));
+
+		} else if (connessione == CONNESSIONE_ASCENSORE) {// si e' connesso l'ascensore
+			printf("Server piano %i, connessione ascensore\n", numero_piano);
+			int peso = 0;
+			int presente = 0;
+			//riceve il peso massimo caricabile dall'ascensore
+			ricevi_dal_socket(clientFd, &peso, sizeof(int));
+			while (1) {
+				testa = getHead(coda);
+				if (testa == NULL) {
+					presente = 0;
+					invia_nel_socket(clientFd, &presente, sizeof(int));
+					close(clientFd);
+					break;
+				}
+				peso = peso - testa->persona->peso;
+				if (peso < 0) {
+					presente = 0;
+					invia_nel_socket(clientFd, &presente, sizeof(int));
+					close(clientFd);
+					break;
+				}
+
+				//comunica all'ascensore che ci sono persone da inviare
+				presente = 1;
+				invia_nel_socket(clientFd, &presente, sizeof(int));
+				//write(clientFd, &presente, sizeof(int));
+
+				//invia la persona
+				invia_nel_socket(clientFd, testa->persona, sizeof(Persona));
+				//write(clientFd, testa->persona, sizeof(Persona));
+
+				//invia la dimensione della stringa nomeTipo
+				long unsigned dimensione = strlen(testa->persona->nomeTipo) + 1;
+
+				invia_nel_socket(clientFd, &dimensione, sizeof(dimensione));
+
+				//invia la stringa nomeTipo
+				invia_nel_socket(clientFd, testa->persona->nomeTipo,
+						dimensione);
+
+				cancella_per_tipo(coda, testa->persona->nomeTipo);
+			}
+			close(clientFd);
+		} else {
+			printf("Errore di connessione");
+			continue;
+		}
+		if (tempo_terminazione <= time(NULL)) {
+			printf("Raggiunto limite temporale. ");
+			break;
+		}
+	}
+	close(SocketFd);
+	printf("Terminazione server piano%i\n", numero_piano);
+	ora = time(NULL);
+	fprintf(logFp, "Terminazione piano, %s (%i)\n", ctime(&ora), (int) ora);
+	fclose(logFp);
+}
+
+void leggi_parametri(int argc, char* argv[]) {
+	if (argc == 1) {
+		printf("Esecuzione con limite temporale di 5 minuti\n");
+		return;
+	}
+	if (argc == 2 && strcmp(argv[1], "--fine-servizio") == 0) {
+		terminazione = fine_servizio;
+		printf(
+				"Esecuzione senza limite temporale, fino alla completa lettura dei file di input e servizio di ogni passegero\n");
+	} else {
+		printf(
+				"Uso: %s [--fine-servizio]\nIl programma termina di default dopo 5 minuti di esecuzione.\n"
+						"--fine-servizio: il programma continua fino alla completa lettura dei file di input e servizio di tutti i passeggeri\n",
+				argv[0]);
+		exit(1);
+	}
+}
+
+int main(int argc, char * argv[]) {
+	int status = 0;
+	numero_piano = 0;
+	int pidserver1 = 0;
+	int pidserver2 = 0;
+	int pidserver3 = 0;
+
+	leggi_parametri(argc, argv);
+
+	tempo_avvio = time(NULL) + 3;
+	int prima_fork = 0;
+	int pid = fork();
+	if (pid) {
+		prima_fork++;
+	}
+	pidserver2 = pid;
+
+	pid = fork();
+	//assegna i numeri dei piani differenziandoli in base ai risultati delle fork
+	//e salva anche i pid dei figli (che saranno i piani server) per la terminazione
+	if (pid) {
+		if (prima_fork) {
+			numero_piano = 2;
+			pidserver3 = pid;
+		} else {
+			numero_piano = 0;
+			pidserver1 = pid;
+		}
+	} else {
+		if (prima_fork) {
+			numero_piano = 3;
+		} else {
+			numero_piano = 1;
+		}
+	}
+
+	pid = fork();
+	time_t now = time(NULL);
+	tempo_terminazione = now + (DURATA_MAX_MINUTI * 60);
+
+	if (!pid) {
+		sleep(tempo_avvio - now + 2);
+		tempo_avvio = time(NULL);
+		client();
+	} else {
+		sleep(tempo_avvio - now);
+		tempo_avvio = time(NULL) + 2;
+		server();
+		//aspetta terminazione del piano client corrispondente
+		waitpid(pid, &status, 0);
+	}
+	//per server piano 2 risulta pidserver3 != 0 e aspetta che server piano 3 termini
+	if (pidserver3)
+		waitpid(pidserver3, &status, 0);
+	//per server piano 0 risulta pidserver1 != 0 e aspetta che server piano 1 termini
+	if (pidserver1)
+		waitpid(pidserver1, &status, 0);
+	//per server piano 0 risulta pidserver2 != 0 e aspetta che server piano 2 termini
+	if (pidserver2)
+		waitpid(pidserver2, &status, 0);
+	return status;
+}
