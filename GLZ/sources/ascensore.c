@@ -63,10 +63,10 @@ void muovi_ascensore() {  // L'ascensore si sposta di un piano in base alla dire
 void invia_nel_socket(int SocketFd, const void* buffer, size_t dim) { // Come in piani.c
 	int scritto = write(SocketFd, buffer, dim);
 	if (scritto < dim) {
-		char* s;
-		asprintf(&s, "Errore invio al piano %i, terminazione ascensore ",
+		char* msg;
+		asprintf(&msg, "Errore durante l'invio, piano %i, terminazione ascensore ",
 				piano);
-		perror(s);
+		perror(msg);
 		exit(36);
 	}
 }
@@ -74,10 +74,10 @@ void invia_nel_socket(int SocketFd, const void* buffer, size_t dim) { // Come in
 void ricevi_dal_socket(int SocketFd, void* nuovo_arrivo, size_t dim) {  // Come in piani.c
 	int letto = read(SocketFd, nuovo_arrivo, dim);
 	if (letto < 0) {
-		char* s;
-		asprintf(&s, "Errore ricezione dal piano %i, terminazione ascensore ",
+		char* msg;
+		asprintf(&msg, "Errore durante la ricezione, piano %i, terminazione ascensore ",
 				piano);
-		perror(s);
+		perror(msg);
 		exit(36);
 	}
 }
@@ -111,11 +111,11 @@ int carica_persone(int SocketFd, FILE* logFp) {   // Si occupa di aspettare le p
 		int tempo_generazione = time(NULL) - tempo_avvio;
 		time_t ora = time( NULL);
 		printf(
-				"[SALITO] %s al piano %i, destinazione %i, tempo dall'avvio %i, %s\n",
+				"[SALITA] %s al piano %i, con destinazione %i, tempo avvio %i, %s\n",
 				nuovo_arrivo->nomeTipo, piano, nuovo_arrivo->destinazione,
 				tempo_generazione, ctime(&ora));
 		fprintf(logFp,
-				"[SALITO] %s al piano %i, destinazione %i, tempo dall'avvio %i, %s\n",
+				"[SALITA] %s al piano %i, con destinazione %i, tempo avvio %i, %s\n",
 				nuovo_arrivo->nomeTipo, piano, nuovo_arrivo->destinazione,
 				tempo_generazione, ctime(&ora));
 
@@ -133,9 +133,9 @@ void scarica_persone(FILE* logFp) {   // Come carica persone, ma ne cancella i d
 	while (scesa != NULL) {
 		int tempo_scesa = time(NULL) - tempo_avvio;
 		time_t ora = time( NULL);
-		printf("[SCESO] %s al piano %i, tempo dall'avvio %i, %s\n",
+		printf("[DISCESA] %s al piano %i, tempo avvio %i, %s\n",
 				scesa->nomeTipo, piano, tempo_scesa, ctime(&ora));
-		fprintf(logFp, "[SCESO] %s al piano %i, tempo dall'avvio %i, %s\n",
+		fprintf(logFp, "[DISCESA] %s al piano %i, tempo avvio %i, %s\n",
 				scesa->nomeTipo, piano, tempo_scesa, ctime(&ora));
 
 		switch(scesa->peso){
@@ -155,7 +155,7 @@ void scarica_persone(FILE* logFp) {   // Come carica persone, ma ne cancella i d
 	}
 }
 
-int main(int argc, char *argv[]) {    // Comunica con il Socket- si autentica con il Server - Carica e Scarica persone 
+int main(int argc, char *argv[]) {    // Comunica con il Socket- si autentica con il Server - Carica e Scarica persone
 	int peso_massimo_imbarcabile = PESO_MASSIMO;
 	piano = 0;
 	short piani_terminati[4] = { 0, 0, 0, 0 };
@@ -185,10 +185,10 @@ int main(int argc, char *argv[]) {    // Comunica con il Socket- si autentica co
 		int connesso = connect(SocketFd, SocketAddrPtr, SocketLenght);
 
 		if (connesso == -1) {
-			char* s;
-			asprintf(&s, "Ascensore NON CONNESSO tramite socket \"%s\"\n",
+			char* msg;
+			asprintf(&msg, "Ascensore NON CONNESSO tramite socket \"%s\"\n",
 					NOME_SOCKET_PIANO[piano]);
-			perror(s);
+			perror(msg);
 			close(SocketFd);
 			exit(34);
 		}
@@ -204,12 +204,12 @@ int main(int argc, char *argv[]) {    // Comunica con il Socket- si autentica co
 		usleep(10000);
 	} while (persone_caricate == 0);
 
-	printf("Peso ascensore = %i\n", carico);
+	printf("Carico dell'ascensore = %i\n", carico);
 
 	while (42) {
 		muovi_ascensore();
 		sleep(TEMPO_SPOSTAMENTO);
-		printf("Arrivo al piano %i\n", piano);
+		printf("Ascensore arrivato al piano %i\n", piano);
 		sleep(TEMPO_SOSTA);
 		scarica_persone(logFp);
 		int SocketFd, SocketLenght, tempo;
@@ -248,18 +248,18 @@ int main(int argc, char *argv[]) {    // Comunica con il Socket- si autentica co
 		invia_nel_socket(SocketFd, &peso_massimo_imbarcabile, sizeof(int));
 
 		persone_caricate = carica_persone(SocketFd, logFp);
-		printf("Peso ascensore = %i\n", carico);
+		printf("Carico dell'ascensore = %i\n", carico);
 		close(SocketFd);
 	}
 	printf("Terminazione ascensore...\n");
 	time_t tempo_terminazione = time(NULL);
 	fprintf(logFp, "Terminazione ascensore %s (%i)\n",
 			ctime(&tempo_terminazione), (int) tempo_terminazione);
-	char* s;
-	asprintf(&s, "Riassunto attivita' giornaliera:\nTotale persone trasportate %i\nBambini %i\nAdulti %i\nAddetti alle consegne %i\n",
+	char* msg;
+	asprintf(&msg, "Resoconto attivita giornaliera:\nPersone servite %i\nBambini %i\nAdulti %i\nAddetti alle consegne %i\n",
 			num_bambini + num_adulti + num_addetti, num_bambini, num_adulti, num_addetti);
-	printf("%s", s);
-	fprintf(logFp, "%s", s);
+	printf("%s", msg);
+	fprintf(logFp, "%s", msg);
 	fclose(logFp);
 	return 0;
 }
