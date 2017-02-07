@@ -42,7 +42,7 @@ int num_bambini = 0;
 int num_adulti = 0;
 int num_addetti = 0;
 
-void muovi_ascensore() {
+void muovi_ascensore() {  // L'ascensore si sposta di un piano in base alla direzione corrente
 	if (direzione == ALTO) {
 		if (piano == piano3) {
 			direzione = BASSO;
@@ -60,7 +60,7 @@ void muovi_ascensore() {
 	}
 }
 
-void invia_nel_socket(int SocketFd, const void* buffer, size_t dim) {
+void invia_nel_socket(int SocketFd, const void* buffer, size_t dim) { // Come in piani.c
 	int scritto = write(SocketFd, buffer, dim);
 	if (scritto < dim) {
 		char* s;
@@ -71,7 +71,7 @@ void invia_nel_socket(int SocketFd, const void* buffer, size_t dim) {
 	}
 }
 
-void ricevi_dal_socket(int SocketFd, void* nuovo_arrivo, size_t dim) {
+void ricevi_dal_socket(int SocketFd, void* nuovo_arrivo, size_t dim) {  // Come in piani.c
 	int letto = read(SocketFd, nuovo_arrivo, dim);
 	if (letto < 0) {
 		char* s;
@@ -82,7 +82,7 @@ void ricevi_dal_socket(int SocketFd, void* nuovo_arrivo, size_t dim) {
 	}
 }
 
-int carica_persone(int SocketFd, FILE* logFp) {
+int carica_persone(int SocketFd, FILE* logFp) {   // Si occupa di aspettare le persone e registrarne i dati nel file di LOG, aggiorna l'ascensore
 	int presente = 0;
 
 	ricevi_dal_socket(SocketFd, &presente, sizeof(int));
@@ -127,7 +127,7 @@ int carica_persone(int SocketFd, FILE* logFp) {
 	return numero_caricate;
 }
 
-void scarica_persone(FILE* logFp) {
+void scarica_persone(FILE* logFp) {   // Come carica persone, ma ne cancella i dati per simulare l'arrivo a destinazione
 	Persona* scesa = NULL;
 	scesa = cancella_scesa(lista, piano);
 	while (scesa != NULL) {
@@ -139,13 +139,13 @@ void scarica_persone(FILE* logFp) {
 				scesa->nomeTipo, piano, tempo_scesa, ctime(&ora));
 
 		switch(scesa->peso){
-		case 80: 
+		case 80:
 			num_adulti++;
 			break;
-		case 40: 
+		case 40:
 			num_bambini++;
 			break;
-		case 90: 
+		case 90:
 			num_addetti++;
 			break;
 		}
@@ -155,7 +155,7 @@ void scarica_persone(FILE* logFp) {
 	}
 }
 
-int main(int argc, char *argv[]) {
+int main(int argc, char *argv[]) {    // Comunica con il Socket- si autentica con il Server - Carica e Scarica persone 
 	int peso_massimo_imbarcabile = PESO_MASSIMO;
 	piano = 0;
 	short piani_terminati[4] = { 0, 0, 0, 0 };
