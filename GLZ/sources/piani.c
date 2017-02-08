@@ -23,7 +23,7 @@ static const char* SOCKETS_PIANI[4] = { "piano0.sock", "piano1.sock",
 		"piano2.sock", "piano3.sock" };
 static const char* PIANI_FILE_INPUT[4] =
 		{ "piano0", "piano1", "piano2", "piano3" };
-static const char* NOME_FILE_LOG[4] = { "piano0.log", "piano1.log",
+static const char* FILES_LOG[4] = { "piano0.log", "piano1.log",
 		"piano2.log", "piano3.log" };
 time_t tempo_avvio;
 time_t tempo_terminazione;
@@ -174,14 +174,14 @@ void server() {
 	int connessione = -1;
 	time_t ora;
 
-	logFp = fopen(NOME_FILE_LOG[numero_piano], "w");
+	logFp = fopen(FILES_LOG[numero_piano], "w");
 
 	printf("Start server, piano%i\n", numero_piano);
 	if (logFp < 0) {
 		char* msg;
 		asprintf(&msg,
 				"Impossibile aprire file di log \"%s\", terminazione server piano %i...",
-				NOME_FILE_LOG[numero_piano], numero_piano);
+				FILES_LOG[numero_piano], numero_piano);
 		perror(msg);
 		exit(-3);
 	}
