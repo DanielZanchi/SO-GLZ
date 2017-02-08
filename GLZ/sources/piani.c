@@ -276,7 +276,7 @@ void server() {
 			//riceve il peso massimo caricabile dall'ascensore
 			ricevi_dal_socket(clientFd, &peso, sizeof(int));
 			while (1) {
-				testa = getHead(coda);
+				testa = getTestaLista(coda);
 				if (testa == NULL) {
 					presente = 0;
 					invia_nel_socket(clientFd, &presente, sizeof(int));

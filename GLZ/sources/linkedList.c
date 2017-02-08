@@ -12,7 +12,7 @@ lista_persone* crea_lista_persone() {     // Viene inizializzata la lista che co
 	return lista;
 }
 
-nodo_lista_persone* getHead(lista_persone* lista) { // Restituisce la testa della lista
+nodo_lista_persone* getTestaLista(lista_persone* lista) { // Restituisce la testa della lista
 	return lista->testaLista;
 }
 

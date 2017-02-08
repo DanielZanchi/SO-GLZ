@@ -18,7 +18,7 @@ typedef struct _lista_persone {
 
 lista_persone* crea_lista_persone();
 
-nodo_lista_persone* getHead(lista_persone* lista);
+nodo_lista_persone* getTestaLista(lista_persone* lista);
 
 nodo_lista_persone* aggiungi_alla_lista(lista_persone* lista,
 		Persona* persona_da_aggiungere);
