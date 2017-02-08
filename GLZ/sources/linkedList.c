@@ -16,7 +16,7 @@ nodo_lista_persone* getTestaLista(lista_persone* lista) { // Restituisce la test
 	return lista->testaLista;
 }
 
-nodo_lista_persone* crea_testa(lista_persone* lista, Persona* persona_da_aggiungere) {  // Aggiunge alla lista di persone la nuova persona, gestendo anche l'eventuale fallimento
+nodo_lista_persone* creaTesta(lista_persone* lista, Persona* persona_da_aggiungere) {  // Aggiunge alla lista di persone la nuova persona, gestendo anche l'eventuale fallimento
 	nodo_lista_persone* nodo = (nodo_lista_persone*) malloc(
 			sizeof(nodo_lista_persone));
 	if (NULL == nodo) {
@@ -33,7 +33,7 @@ nodo_lista_persone* crea_testa(lista_persone* lista, Persona* persona_da_aggiung
 
 nodo_lista_persone* aggiungiPersonaLista(lista_persone* lista,	Persona* persona_da_aggiungere) {  //Crea una lista se non c'è gia, altrimenti alloca in memoria spazio per nodo e puntatore
 	if (NULL == lista->testaLista) {
-		return (crea_testa(lista, persona_da_aggiungere));
+		return (creaTesta(lista, persona_da_aggiungere));
 	}
 	nodo_lista_persone *nodo = (nodo_lista_persone*) malloc(
 			sizeof(nodo_lista_persone));
@@ -99,7 +99,7 @@ void eliminaPerTipo(lista_persone* lista, char *tipo) { //Cancella del tutto la 
 	}
 }
 
-nodo_lista_persone* cerca_per_destinazione(lista_persone* lista, int destination, nodo_lista_persone** prev) { //Restituisce la prima persona trovata con destinazione uguale a "destination", aggiorna anche "prev"
+nodo_lista_persone* ricercaPerDestinazione(lista_persone* lista, int destination, nodo_lista_persone** prev) { //Restituisce la prima persona trovata con destinazione uguale a "destination", aggiorna anche "prev"
 	nodo_lista_persone *nodo = lista->testaLista;
 	nodo_lista_persone *tmp = NULL;
 	int found = 0;
@@ -128,7 +128,7 @@ Persona* eliminaDiscesa(lista_persone* lista, int arrivo) { //Cancella la prima 
 	nodo_lista_persone *del = NULL;
 	Persona* cancellata = NULL;
 
-	del = cerca_per_destinazione(lista, arrivo, &prev);
+	del = ricercaPerDestinazione(lista, arrivo, &prev);
 
 	if (del) {
 		if (prev != NULL) {
