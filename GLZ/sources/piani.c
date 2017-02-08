@@ -19,9 +19,9 @@
 static const int CONNESSIONE_PIANO_CLIENT = 1;
 static const int CONNESSIONE_ASCENSORE = 0;
 
-static const char* NOME_SOCKET_PIANO[4] = { "piano0.sock", "piano1.sock",
+static const char* SOCKETS_PIANI[4] = { "piano0.sock", "piano1.sock",
 		"piano2.sock", "piano3.sock" };
-static const char* NOME_FILE_INPUT[4] =
+static const char* PIANI_FILE_INPUT[4] =
 		{ "piano0", "piano1", "piano2", "piano3" };
 static const char* NOME_FILE_LOG[4] = { "piano0.log", "piano1.log",
 		"piano2.log", "piano3.log" };
@@ -39,7 +39,7 @@ void scriviNelSocket(int SocketFd, const void* buffer, size_t dim) {
 		char* msg;
 		asprintf(&msg,
 				"Errore invio messaggio socket \"%s\", terminazione al piano %i...\n",
-				NOME_SOCKET_PIANO[numero_piano], numero_piano);
+				SOCKETS_PIANI[numero_piano], numero_piano);
 		perror(msg);
 		exit(36);
 	}
@@ -51,7 +51,7 @@ void leggiDalSocket(int SocketFd, void* nuovo_arrivo, size_t dim) {
 		char* msg;
 		asprintf(&msg,
 				"Errore ricezione messaggio socket \"%s\", terminazione al piano %i...\n",
-				NOME_SOCKET_PIANO[numero_piano], numero_piano);
+				SOCKETS_PIANI[numero_piano], numero_piano);
 		perror(msg);
 		exit(36);
 	}
@@ -67,13 +67,13 @@ void client() {
 
 	printf("Esecuzione del client, piano%i\n", numero_piano);
 
-	inputFp = fopen(NOME_FILE_INPUT[numero_piano], "r");
+	inputFp = fopen(PIANI_FILE_INPUT[numero_piano], "r");
 
 	if (inputFp == NULL) {
 		char* msg;
 		asprintf(&msg,
 				"Impossibile aprire file di input \"%s\", terminazione client, piano %i ",
-				NOME_FILE_INPUT[numero_piano], numero_piano);
+				PIANI_FILE_INPUT[numero_piano], numero_piano);
 		perror(msg);
 		exit(-3);
 	}
@@ -92,7 +92,7 @@ void client() {
 		if (strcmp(riga, "\n") == 0) {
 			printf(
 					"Ultima riga del file di input \"%s\", terminazione client, piano %i\n",
-					NOME_FILE_INPUT[numero_piano], numero_piano);
+					PIANI_FILE_INPUT[numero_piano], numero_piano);
 			break;
 		}
 
@@ -109,13 +109,13 @@ void client() {
 			char* msg;
 			asprintf(&msg,
 					"Errore durante la creazione del socket \"%s\", terminazione client, piano %i ",
-					NOME_SOCKET_PIANO[numero_piano], numero_piano);
+					SOCKETS_PIANI[numero_piano], numero_piano);
 			perror(msg);
 			exit(76);
 		}
 
 		SocketAddress.sun_family = AF_UNIX; /* Set domain type */
-		strcpy(SocketAddress.sun_path, NOME_SOCKET_PIANO[numero_piano]); /* Set name */
+		strcpy(SocketAddress.sun_path, SOCKETS_PIANI[numero_piano]); /* Set name */
 
 		int connesso = connect(SocketFd, SocketAddrPtr, SocketLenght);
 		if (connesso == -1) {
@@ -188,7 +188,7 @@ void server() {
 	fprintf(logFp, "Avviato piano: %s (%i)\n", ctime(&tempo_avvio),
 			(int) tempo_avvio);
 
-	unlink(NOME_SOCKET_PIANO[numero_piano]);
+	unlink(SOCKETS_PIANI[numero_piano]);
 	int SocketFd;
 	int SocketLenght;
 	struct sockaddr_un SocketAddress;
@@ -202,16 +202,16 @@ void server() {
 	if (SocketFd == -1) {
 		printf(
 				"Errore durante la creazione del socket \"%s\", terminazione del server, piano %i...",
-				NOME_SOCKET_PIANO[numero_piano], numero_piano);
+				SOCKETS_PIANI[numero_piano], numero_piano);
 		exit(-76);
 	}
 	SocketAddress.sun_family = AF_UNIX; /* Set domain type */
-	strcpy(SocketAddress.sun_path, NOME_SOCKET_PIANO[numero_piano]); /* Set name */
+	strcpy(SocketAddress.sun_path, SOCKETS_PIANI[numero_piano]); /* Set name */
 	int result = bind(SocketFd, SocketAddrPtr, SocketLenght);
 	if (SocketFd == -1) {
 		printf(
 				"Errore durante la bind del socket \"%s\", terminazione del server, piano %i...",
-				NOME_SOCKET_PIANO[numero_piano], numero_piano);
+				SOCKETS_PIANI[numero_piano], numero_piano);
 		perror("");
 		exit(-76);
 	}
@@ -219,7 +219,7 @@ void server() {
 	if (SocketFd == -1) {
 		printf(
 				"Errore durante la listen del socket \"%s\", terminazione del server, piano %i...",
-				NOME_SOCKET_PIANO[numero_piano], numero_piano);
+				SOCKETS_PIANI[numero_piano], numero_piano);
 		perror("");
 		exit(-76);
 	}

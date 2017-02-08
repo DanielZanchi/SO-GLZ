@@ -29,7 +29,7 @@ enum terminazione {
 
 static const int CONNESSIONE_ASCENSORE = 0;
 
-static const char* NOME_SOCKET_PIANO[4] = { "piano0.sock", "piano1.sock",
+static const char* SOCKETS_PIANI[4] = { "piano0.sock", "piano1.sock",
 		"piano2.sock", "piano3.sock" };
 
 lista_persone* lista = NULL;
@@ -178,13 +178,13 @@ int main(int argc, char *argv[]) {    // Comunica con il Socket- si autentica co
 		/* Create a UNIX socket, bidirectional, default protocol */
 		SocketFd = socket(AF_UNIX, SOCK_STREAM, DEFAULT_PROTOCOL);
 		SocketAddress.sun_family = AF_UNIX; /* Set domain type */
-		strcpy(SocketAddress.sun_path, NOME_SOCKET_PIANO[piano]); /* Set name */
+		strcpy(SocketAddress.sun_path, SOCKETS_PIANI[piano]); /* Set name */
 		int connesso = connect(SocketFd, SocketAddrPtr, SocketLenght);
 
 		if (connesso == -1) {
 			char* msg;
 			asprintf(&msg, "Ascensore NON CONNESSO tramite socket \"%s\"\n",
-					NOME_SOCKET_PIANO[piano]);
+					SOCKETS_PIANI[piano]);
 			perror(msg);
 			close(SocketFd);
 			exit(34);
@@ -219,7 +219,7 @@ int main(int argc, char *argv[]) {    // Comunica con il Socket- si autentica co
 		/* Create a UNIX socket, bidirectional, default protocol */
 		SocketFd = socket(AF_UNIX, SOCK_STREAM, DEFAULT_PROTOCOL);
 		SocketAddress.sun_family = AF_UNIX; /* Set domain type */
-		strcpy(SocketAddress.sun_path, NOME_SOCKET_PIANO[piano]); /* Set name */
+		strcpy(SocketAddress.sun_path, SOCKETS_PIANI[piano]); /* Set name */
 		int connesso = connect(SocketFd, SocketAddrPtr, SocketLenght);
 
 		if (connesso != 0) {
@@ -235,7 +235,7 @@ int main(int argc, char *argv[]) {    // Comunica con il Socket- si autentica co
 				continue;
 			}
 		} else {
-			printf("Connessione tramite \"%s\"\n", NOME_SOCKET_PIANO[piano]);
+			printf("Connessione tramite \"%s\"\n", SOCKETS_PIANI[piano]);
 		}
 
 		scriviNelSocket(SocketFd, &CONNESSIONE_ASCENSORE,
