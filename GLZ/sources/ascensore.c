@@ -35,9 +35,9 @@ static const char* SOCKETS_PIANI[4] = { "piano0.sock", "piano1.sock",
 lista_persone* lista = NULL;
 int carico = 0;
 time_t tempo_avvio;
-int num_bambini = 0;
-int num_adulti = 0;
-int num_addetti = 0;
+int contatore_bambini = 0;
+int contatore_adulti = 0;
+int contatore_addetti_consegne = 0;
 
 void spostamentoAscensore() {  // L'ascensore si sposta di un piano in base alla direzione corrente
 	if (direzione == ALTO) {
@@ -80,16 +80,16 @@ void leggiDalSocket(int SocketFd, void* nuovo_arrivo, size_t dim) {  // Come in 
 }
 
 int salitaPersone(int SocketFd, FILE* logFp) {   // Si occupa di aspettare le persone e registrarne i dati nel file di LOG, aggiorna l'ascensore
-	int presente = 0;
+	int persona_presente = 0;
 
-	leggiDalSocket(SocketFd, &presente, sizeof(int));
-	if (!presente) {
+	leggiDalSocket(SocketFd, &persona_presente, sizeof(int));
+	if (!persona_presente) {
 		return 0;
 	}
 
 	Persona* nuovo_arrivo = (Persona*) malloc(sizeof(Persona));
-	int numero_caricate = 0;
-	while (presente) {
+	int contatore_caricate = 0;
+	while (persona_presente) {
 		nuovo_arrivo = (Persona*) malloc(sizeof(Persona));
 		//printf("ricezione persona");
 		leggiDalSocket(SocketFd, nuovo_arrivo, sizeof(Persona));
@@ -117,11 +117,11 @@ int salitaPersone(int SocketFd, FILE* logFp) {   // Si occupa di aspettare le pe
 				tempo_generazione, ctime(&ora));
 
 		carico = carico + nuovo_arrivo->peso;
-		numero_caricate++;
+		contatore_caricate++;
 
-		leggiDalSocket(SocketFd, &presente, sizeof(int));
+		leggiDalSocket(SocketFd, &persona_presente, sizeof(int));
 	}
-	return numero_caricate;
+	return contatore_caricate;
 }
 
 void discesaPersone(FILE* logFp) {   // Come carica persone, ma ne cancella i dati per simulare l'arrivo a destinazione
@@ -137,13 +137,13 @@ void discesaPersone(FILE* logFp) {   // Come carica persone, ma ne cancella i da
 
 		switch(scesa->peso){
 		case 80:
-			num_adulti++;
+			contatore_adulti++;
 			break;
 		case 40:
-			num_bambini++;
+			contatore_bambini++;
 			break;
 		case 90:
-			num_addetti++;
+			contatore_addetti_consegne++;
 			break;
 		}
 		carico = carico - scesa->peso;
@@ -156,7 +156,7 @@ int main(int argc, char *argv[]) {    // Comunica con il Socket- si autentica co
 	int peso_massimo_imbarcabile = PESO_MASSIMO;
 	piano = 0;
 	short piani_terminati[4] = { 0, 0, 0, 0 };
-	int piani_attivi = 4;
+	int piani_non_terminati = 4;
 
 	lista = creaListaPersone();
 
@@ -203,7 +203,7 @@ int main(int argc, char *argv[]) {    // Comunica con il Socket- si autentica co
 
 	printf("Carico dell'ascensore = %i\n", carico);
 
-	while (42) {
+	while (1) {
 		spostamentoAscensore();
 		sleep(TEMPO_SPOSTAMENTO);
 		printf("Ascensore arrivato al piano %i\n", piano);
@@ -224,13 +224,13 @@ int main(int argc, char *argv[]) {    // Comunica con il Socket- si autentica co
 
 		if (connesso != 0) {
 			if (piani_terminati[piano]) {
-				if (piani_attivi == 0) {
+				if (piani_non_terminati == 0) {
 					close(SocketFd);
 					break;
 				}
 				continue;
 			} else {
-				piani_attivi--;
+				piani_non_terminati--;
 				piani_terminati[piano] = 1;
 				continue;
 			}
@@ -254,7 +254,7 @@ int main(int argc, char *argv[]) {    // Comunica con il Socket- si autentica co
 			ctime(&tempo_terminazione), (int) tempo_terminazione);
 	char* msg;
 	asprintf(&msg, "Resoconto attivita giornaliera:\nPersone servite %i\nBambini %i\nAdulti %i\nAddetti alle consegne %i\n",
-			num_bambini + num_adulti + num_addetti, num_bambini, num_adulti, num_addetti);
+			contatore_bambini + contatore_adulti + contatore_addetti_consegne, contatore_bambini, contatore_adulti, contatore_addetti_consegne);
 	printf("%s", msg);
 	fprintf(logFp, "%s", msg);
 	fclose(logFp);
