@@ -152,11 +152,11 @@ void client() {
 		invia_nel_socket(SocketFd, &persona, dimensione);
 
 		//invia la lunghezza della stringa
-		dimensione = strlen(persona.nomeTipo) + 1;
+		dimensione = strlen(persona.categoriaPersona) + 1;
 		invia_nel_socket(SocketFd, &dimensione, sizeof(dimensione));
 
 		//invia la stringa
-		invia_nel_socket(SocketFd, persona.nomeTipo, dimensione);
+		invia_nel_socket(SocketFd, persona.categoriaPersona, dimensione);
 
 		close(SocketFd);
 		if (tempo_terminazione <= time(NULL)) {
@@ -252,13 +252,13 @@ void server() {
 
 			ricevi_dal_socket(clientFd, nuovo_arrivo, sizeof(Persona));
 
-			//legge lunghezza striga nomeTipo
+			//legge lunghezza striga categoriaPersona
 			long unsigned dimensione = 0;
 			ricevi_dal_socket(clientFd, &dimensione, sizeof(dimensione));
 
-			//legge stringa nomeTipo
-			nuovo_arrivo->nomeTipo = (char*) malloc(dimensione);
-			ricevi_dal_socket(clientFd, nuovo_arrivo->nomeTipo, dimensione);
+			//legge stringa categoriaPersona
+			nuovo_arrivo->categoriaPersona = (char*) malloc(dimensione);
+			ricevi_dal_socket(clientFd, nuovo_arrivo->categoriaPersona, dimensione);
 
 			aggiungi_alla_lista(coda, nuovo_arrivo);
 
@@ -267,11 +267,11 @@ void server() {
 
 			printf(
 					"[GENERATO] %s al piano %i,con destinazione piano %i, ora avvio %i, %s\n",
-					nuovo_arrivo->nomeTipo, numero_piano,
+					nuovo_arrivo->categoriaPersona, numero_piano,
 					nuovo_arrivo->destinazione, tempo_generazione, ctime(&ora));
 			fprintf(logFp,
 					"[GENERATO] %s,con destinazione piano %i, ora avvio %i, %s\n",
-					nuovo_arrivo->nomeTipo, nuovo_arrivo->destinazione,
+					nuovo_arrivo->categoriaPersona, nuovo_arrivo->destinazione,
 					tempo_generazione, ctime(&ora));
 
 		} else if (connessione == CONNESSIONE_ASCENSORE) {// si e' connesso l'ascensore
@@ -305,16 +305,16 @@ void server() {
 				invia_nel_socket(clientFd, testa->persona, sizeof(Persona));
 				//write(clientFd, testa->persona, sizeof(Persona));
 
-				//invia la dimensione della stringa nomeTipo
-				long unsigned dimensione = strlen(testa->persona->nomeTipo) + 1;
+				//invia la dimensione della stringa categoriaPersona
+				long unsigned dimensione = strlen(testa->persona->categoriaPersona) + 1;
 
 				invia_nel_socket(clientFd, &dimensione, sizeof(dimensione));
 
-				//invia la stringa nomeTipo
-				invia_nel_socket(clientFd, testa->persona->nomeTipo,
+				//invia la stringa categoriaPersona
+				invia_nel_socket(clientFd, testa->persona->categoriaPersona,
 						dimensione);
 
-				cancella_per_tipo(coda, testa->persona->nomeTipo);
+				cancella_per_tipo(coda, testa->persona->categoriaPersona);
 			}
 			close(clientFd);
 		} else {

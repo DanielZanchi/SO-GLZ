@@ -62,7 +62,7 @@ nodo_lista_persone* cerca_per_tipo(lista_persone* lista, char *tipo,nodo_lista_p
 	int found = 0;
 
 	while (nodo != NULL) {
-		if (strcmp(nodo->persona->nomeTipo, tipo) == 0) {
+		if (strcmp(nodo->persona->categoriaPersona, tipo) == 0) {
 			found = 1;
 			break;
 		} else {

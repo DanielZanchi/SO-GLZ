@@ -98,25 +98,25 @@ int carica_persone(int SocketFd, FILE* logFp) {   // Si occupa di aspettare le p
 		ricevi_dal_socket(SocketFd, nuovo_arrivo, sizeof(Persona));
 		aggiungi_alla_lista(lista, nuovo_arrivo);
 
-		//legge dimensione stringa nomeTipo
+		//legge dimensione stringa categoriaPersona
 		long unsigned dimensione = 0;
 		//printf("ricezione dimensione");
 		ricevi_dal_socket(SocketFd, &dimensione, sizeof(dimensione));
-		nuovo_arrivo->nomeTipo = (char*) malloc(dimensione);
+		nuovo_arrivo->categoriaPersona = (char*) malloc(dimensione);
 
 		//legge la stringa nome tipo
 		//printf("ricezione tipo");
-		ricevi_dal_socket(SocketFd, nuovo_arrivo->nomeTipo, dimensione);
+		ricevi_dal_socket(SocketFd, nuovo_arrivo->categoriaPersona, dimensione);
 
 		int tempo_generazione = time(NULL) - tempo_avvio;
 		time_t ora = time( NULL);
 		printf(
 				"[SALITA] %s al piano %i, con destinazione %i, tempo avvio %i, %s\n",
-				nuovo_arrivo->nomeTipo, piano, nuovo_arrivo->destinazione,
+				nuovo_arrivo->categoriaPersona, piano, nuovo_arrivo->destinazione,
 				tempo_generazione, ctime(&ora));
 		fprintf(logFp,
 				"[SALITA] %s al piano %i, con destinazione %i, tempo avvio %i, %s\n",
-				nuovo_arrivo->nomeTipo, piano, nuovo_arrivo->destinazione,
+				nuovo_arrivo->categoriaPersona, piano, nuovo_arrivo->destinazione,
 				tempo_generazione, ctime(&ora));
 
 		carico = carico + nuovo_arrivo->peso;
@@ -134,9 +134,9 @@ void scarica_persone(FILE* logFp) {   // Come carica persone, ma ne cancella i d
 		int tempo_scesa = time(NULL) - tempo_avvio;
 		time_t ora = time( NULL);
 		printf("[DISCESA] %s al piano %i, tempo avvio %i, %s\n",
-				scesa->nomeTipo, piano, tempo_scesa, ctime(&ora));
+				scesa->categoriaPersona, piano, tempo_scesa, ctime(&ora));
 		fprintf(logFp, "[DISCESA] %s al piano %i, tempo avvio %i, %s\n",
-				scesa->nomeTipo, piano, tempo_scesa, ctime(&ora));
+				scesa->categoriaPersona, piano, tempo_scesa, ctime(&ora));
 
 		switch(scesa->peso){
 		case 80:

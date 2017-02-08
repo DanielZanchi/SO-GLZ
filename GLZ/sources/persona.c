@@ -12,15 +12,15 @@ Persona creaPersona(char tipo, int destinazione) {
 	switch (tipo) {
 	case 'A':
 		nuova_persona.peso = 80;
-		nuova_persona.nomeTipo = nomiTipi[0];
+		nuova_persona.categoriaPersona = categoriePersone[0];
 		break;
 	case 'B':
 		nuova_persona.peso = 40;
-		nuova_persona.nomeTipo = nomiTipi[1];
+		nuova_persona.categoriaPersona = categoriePersone[1];
 		break;
 	case 'C':
 		nuova_persona.peso = 90;
-		nuova_persona.nomeTipo = nomiTipi[2];
+		nuova_persona.categoriaPersona = categoriePersone[2];
 		break;
 	}
 	nuova_persona.destinazione = destinazione;
