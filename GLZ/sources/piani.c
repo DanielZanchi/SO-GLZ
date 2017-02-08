@@ -33,7 +33,7 @@ enum terminazione {
 	cinque_minuti, fine_servizio
 } terminazione = cinque_minuti;
 
-void invia_nel_socket(int SocketFd, const void* buffer, size_t dim) {
+void scriviNelSocket(int SocketFd, const void* buffer, size_t dim) {
 	int scritto = write(SocketFd, buffer, dim);
 	if (scritto < dim) {
 		char* msg;
@@ -45,7 +45,7 @@ void invia_nel_socket(int SocketFd, const void* buffer, size_t dim) {
 	}
 }
 
-void ricevi_dal_socket(int SocketFd, void* nuovo_arrivo, size_t dim) {
+void leggiDalSocket(int SocketFd, void* nuovo_arrivo, size_t dim) {
 	int letto = read(SocketFd, nuovo_arrivo, dim);
 	if (letto < 0) {
 		char* msg;
@@ -139,19 +139,19 @@ void client() {
 		tempo = time(NULL);
 		sleep(tempo_generazione_num - (tempo - tempo_avvio));
 
-		invia_nel_socket(SocketFd, &CONNESSIONE_PIANO_CLIENT,
+		scriviNelSocket(SocketFd, &CONNESSIONE_PIANO_CLIENT,
 				sizeof(CONNESSIONE_PIANO_CLIENT));
 
 		long unsigned dimensione = sizeof(persona);
 		//invia la persona
-		invia_nel_socket(SocketFd, &persona, dimensione);
+		scriviNelSocket(SocketFd, &persona, dimensione);
 
 		//invia la lunghezza della stringa
 		dimensione = strlen(persona.categoriaPersona) + 1;
-		invia_nel_socket(SocketFd, &dimensione, sizeof(dimensione));
+		scriviNelSocket(SocketFd, &dimensione, sizeof(dimensione));
 
 		//invia la stringa
-		invia_nel_socket(SocketFd, persona.categoriaPersona, dimensione);
+		scriviNelSocket(SocketFd, persona.categoriaPersona, dimensione);
 
 		close(SocketFd);
 		if (tempo_terminazione <= time(NULL)) {
@@ -231,7 +231,7 @@ void server() {
 			printf("Terminazione del server, piano %i", numero_piano);
 			exit(5);
 		}
-		//ricevi_dal_socket(clientFd, &connessione, sizeof(connessione));
+		//leggiDalSocket(clientFd, &connessione, sizeof(connessione));
 		read(clientFd, &connessione, sizeof(connessione));
 
 		if (connessione == CONNESSIONE_PIANO_CLIENT) {// si e' connesso un piano-client
@@ -245,15 +245,15 @@ void server() {
 				exit(37);
 			}
 
-			ricevi_dal_socket(clientFd, nuovo_arrivo, sizeof(Persona));
+			leggiDalSocket(clientFd, nuovo_arrivo, sizeof(Persona));
 
 			//legge lunghezza striga categoriaPersona
 			long unsigned dimensione = 0;
-			ricevi_dal_socket(clientFd, &dimensione, sizeof(dimensione));
+			leggiDalSocket(clientFd, &dimensione, sizeof(dimensione));
 
 			//legge stringa categoriaPersona
 			nuovo_arrivo->categoriaPersona = (char*) malloc(dimensione);
-			ricevi_dal_socket(clientFd, nuovo_arrivo->categoriaPersona, dimensione);
+			leggiDalSocket(clientFd, nuovo_arrivo->categoriaPersona, dimensione);
 
 			aggiungiPersonaLista(coda, nuovo_arrivo);
 
@@ -274,39 +274,39 @@ void server() {
 			int peso = 0;
 			int presente = 0;
 			//riceve il peso massimo caricabile dall'ascensore
-			ricevi_dal_socket(clientFd, &peso, sizeof(int));
+			leggiDalSocket(clientFd, &peso, sizeof(int));
 			while (1) {
 				testa = getTestaLista(coda);
 				if (testa == NULL) {
 					presente = 0;
-					invia_nel_socket(clientFd, &presente, sizeof(int));
+					scriviNelSocket(clientFd, &presente, sizeof(int));
 					close(clientFd);
 					break;
 				}
 				peso = peso - testa->persona->peso;
 				if (peso < 0) {
 					presente = 0;
-					invia_nel_socket(clientFd, &presente, sizeof(int));
+					scriviNelSocket(clientFd, &presente, sizeof(int));
 					close(clientFd);
 					break;
 				}
 
 				//comunica all'ascensore che ci sono persone da inviare
 				presente = 1;
-				invia_nel_socket(clientFd, &presente, sizeof(int));
+				scriviNelSocket(clientFd, &presente, sizeof(int));
 				//write(clientFd, &presente, sizeof(int));
 
 				//invia la persona
-				invia_nel_socket(clientFd, testa->persona, sizeof(Persona));
+				scriviNelSocket(clientFd, testa->persona, sizeof(Persona));
 				//write(clientFd, testa->persona, sizeof(Persona));
 
 				//invia la dimensione della stringa categoriaPersona
 				long unsigned dimensione = strlen(testa->persona->categoriaPersona) + 1;
 
-				invia_nel_socket(clientFd, &dimensione, sizeof(dimensione));
+				scriviNelSocket(clientFd, &dimensione, sizeof(dimensione));
 
 				//invia la stringa categoriaPersona
-				invia_nel_socket(clientFd, testa->persona->categoriaPersona,
+				scriviNelSocket(clientFd, testa->persona->categoriaPersona,
 						dimensione);
 
 				eliminaPerTipo(coda, testa->persona->categoriaPersona);
