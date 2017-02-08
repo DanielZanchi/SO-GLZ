@@ -7,13 +7,13 @@
 
 lista_persone* crea_lista_persone() {     // Viene inizializzata la lista che conterra le persone
 	lista_persone* lista = (lista_persone*) malloc(sizeof(lista_persone));
-	lista->head = NULL;
-	lista->current = NULL;
+	lista->testaLista = NULL;
+	lista->elementoCorrente = NULL;
 	return lista;
 }
 
 nodo_lista_persone* getHead(lista_persone* lista) { // Restituisce la testa della lista
-	return lista->head;
+	return lista->testaLista;
 }
 
 nodo_lista_persone* crea_testa(lista_persone* lista, Persona* persona_da_aggiungere) {  // Aggiunge alla lista di persone la nuova persona, gestendo anche l'eventuale fallimento
@@ -26,13 +26,13 @@ nodo_lista_persone* crea_testa(lista_persone* lista, Persona* persona_da_aggiung
 	nodo->persona = persona_da_aggiungere;
 	nodo->successivo = NULL;
 
-	lista->head = lista->current = nodo;
+	lista->testaLista = lista->elementoCorrente = nodo;
 
 	return nodo;
 }
 
 nodo_lista_persone* aggiungi_alla_lista(lista_persone* lista,	Persona* persona_da_aggiungere) {  //Crea una lista se non c'è gia, altrimenti alloca in memoria spazio per nodo e puntatore
-	if (NULL == lista->head) {
+	if (NULL == lista->testaLista) {
 		return (crea_testa(lista, persona_da_aggiungere));
 	}
 	nodo_lista_persone *nodo = (nodo_lista_persone*) malloc(
@@ -46,13 +46,13 @@ nodo_lista_persone* aggiungi_alla_lista(lista_persone* lista,	Persona* persona_d
 
 	nodo->successivo = NULL;
 
-	lista->current->successivo = nodo;
-	lista->current = nodo;
+	lista->elementoCorrente->successivo = nodo;
+	lista->elementoCorrente = nodo;
 	return nodo;
 }
 
 nodo_lista_persone* cerca_per_tipo(lista_persone* lista, char *tipo,nodo_lista_persone **prev) { //Restituisce il primo puntatore relativo al tipo di persona trovata, salvando il precedente nodo in prev
-	nodo_lista_persone *nodo = lista->head;
+	nodo_lista_persone *nodo = lista->testaLista;
 	nodo_lista_persone *tmp = NULL;
 
 	int found = 0;
@@ -86,11 +86,11 @@ void cancella_per_tipo(lista_persone* lista, char *tipo) { //Cancella del tutto 
 		if (prev != NULL) {
 			prev->successivo = del->successivo;
 		}
-		if (del == lista->current) {
-			lista->current = prev;
+		if (del == lista->elementoCorrente) {
+			lista->elementoCorrente = prev;
 		}
-		if (del == lista->head) {
-			lista->head = del->successivo;
+		if (del == lista->testaLista) {
+			lista->testaLista = del->successivo;
 		}
 		free(del->persona);
 		free(del);
@@ -100,7 +100,7 @@ void cancella_per_tipo(lista_persone* lista, char *tipo) { //Cancella del tutto 
 }
 
 nodo_lista_persone* cerca_per_destinazione(lista_persone* lista, int destination, nodo_lista_persone** prev) { //Restituisce la prima persona trovata con destinazione uguale a "destination", aggiorna anche "prev"
-	nodo_lista_persone *nodo = lista->head;
+	nodo_lista_persone *nodo = lista->testaLista;
 	nodo_lista_persone *tmp = NULL;
 	int found = 0;
 
@@ -134,11 +134,11 @@ Persona* cancella_scesa(lista_persone* lista, int arrivo) { //Cancella la prima 
 		if (prev != NULL) {
 			prev->successivo = del->successivo;
 		}
-		if (del == lista->current) {
-			lista->current = prev;
+		if (del == lista->elementoCorrente) {
+			lista->elementoCorrente = prev;
 		}
-		if (del == lista->head) {
-			lista->head = del->successivo;
+		if (del == lista->testaLista) {
+			lista->testaLista = del->successivo;
 
 		}
 		cancellata = del->persona;

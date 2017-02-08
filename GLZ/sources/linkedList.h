@@ -11,8 +11,8 @@ typedef struct _nodo_lista_persone {
 } nodo_lista_persone;
 
 typedef struct _lista_persone {
-	nodo_lista_persone* head;
-	nodo_lista_persone* current;
+	nodo_lista_persone* testaLista;
+	nodo_lista_persone* elementoCorrente;
 } lista_persone;
 
 
