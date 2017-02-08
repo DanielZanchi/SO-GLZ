@@ -58,18 +58,19 @@ void leggiDalSocket(int SocketFd, void* nuovo_arrivo, size_t dim) {
 }
 
 void client() {
-	char* tipo = NULL;
+	char* categoria = NULL;
 	char* tempo_generazione = NULL;
+	int tempo_generazione_intero = 0;
 	char* destinazione = NULL;
-	int tempo_generazione_num = 0;
-	int destinazione_num = 0;
-	FILE * inputFp = NULL;
+	int destinazione_int = 0;
+
+	FILE * input_file_piani = NULL;
 
 	printf("Esecuzione del client, piano%i\n", numero_piano);
 
-	inputFp = fopen(PIANI_FILE_INPUT[numero_piano], "r");
+	input_file_piani = fopen(PIANI_FILE_INPUT[numero_piano], "r");
 
-	if (inputFp == NULL) {
+	if (input_file_piani == NULL) {
 		char* msg;
 		asprintf(&msg,
 				"Impossibile aprire file di input \"%s\", terminazione client, piano %i ",
@@ -77,19 +78,28 @@ void client() {
 		perror(msg);
 		exit(20);
 	}
-	long int posizione = 0;
 
 	while (1) {
-		char* riga = NULL;
-		size_t len = 0;
+		char* riga_corrente = NULL;
+		size_t lunghezza = 0;
 		int presente = 0;
 		int tempo;
 
 		//legge una riga dal file di input e genera la persona
 		//se la riga e' vuota, termina
-		getline(&riga, &len, inputFp);
 
-		if (strcmp(riga, "\n") == 0) {
+		int bytes_letti=getline(&riga_corrente, &lunghezza, input_file_piani);
+		if(bytes_letti==-1){
+			char* msg;
+			asprintf(&msg,
+					"Si e' verificato un errore di lettura \"%s\", terminazione client",
+					input_file_piani);
+			perror(msg);
+			exit(20);
+		}
+
+
+		if (strcmp(riga_corrente, "\n") == 0) {
 			printf(
 					"Ultima riga del file di input \"%s\", terminazione client, piano %i\n",
 					PIANI_FILE_INPUT[numero_piano], numero_piano);
@@ -122,22 +132,22 @@ void client() {
 			char* msg;
 			asprintf(&msg, "Client al piano %i errore connessione", numero_piano);
 			perror(msg);
-			fclose(inputFp);
+			fclose(input_file_piani);
 			exit(12);
 		}
-		char* rigaTmp = riga;
+		char* riga_temp = riga_corrente;
 
-		tipo = strsep(&rigaTmp, " ");
-		tempo_generazione = strsep(&rigaTmp, " ");
-		destinazione = strsep(&rigaTmp, " ");
+		categoria = strsep(&riga_temp, " ");
+		tempo_generazione = strsep(&riga_temp, " ");
+		destinazione = strsep(&riga_temp, " ");
 
-		tempo_generazione_num = atoi(tempo_generazione);
-		destinazione_num = atoi(destinazione);
+		tempo_generazione_intero = atoi(tempo_generazione);
+		destinazione_int = atoi(destinazione);
 
-		Persona persona = creaPersona(tipo[0], destinazione_num);
-		free(riga);
+		Persona persona = creaPersona(categoria[0], destinazione_int);
+		free(riga_corrente);
 		tempo = time(NULL);
-		sleep(tempo_generazione_num - (tempo - tempo_avvio));
+		sleep(tempo_generazione_intero - (tempo - tempo_avvio));
 
 		scriviNelSocket(SocketFd, &CONNESSIONE_PIANO_CLIENT,
 				sizeof(CONNESSIONE_PIANO_CLIENT));
@@ -161,7 +171,7 @@ void client() {
 		}
 	}
 
-	fclose(inputFp);
+	fclose(input_file_piani);
 }
 
 void server() {
@@ -169,15 +179,15 @@ void server() {
 	nodo_lista_persone* testa = NULL;
 	coda = creaListaPersone();
 
-	FILE* logFp = NULL;
+	FILE* log_file = NULL;
 	Persona* nuovo_arrivo = NULL;
 	int connessione = -1;
 	time_t ora;
 
-	logFp = fopen(FILES_LOG[numero_piano], "w");
+	log_file = fopen(FILES_LOG[numero_piano], "w");
 
 	printf("Start server, piano%i\n", numero_piano);
-	if (logFp < 0) {
+	if (log_file < 0) {
 		char* msg;
 		asprintf(&msg,
 				"Impossibile aprire file di log \"%s\", terminazione server piano %i...",
@@ -185,7 +195,7 @@ void server() {
 		perror(msg);
 		exit(20);
 	}
-	fprintf(logFp, "Avviato piano: %s (%i)\n", ctime(&tempo_avvio),
+	fprintf(log_file, "Avviato piano: %s (%i)\n", ctime(&tempo_avvio),
 			(int) tempo_avvio);
 
 	unlink(SOCKETS_PIANI[numero_piano]);
@@ -264,7 +274,7 @@ void server() {
 					"[GENERATO] %s al piano %i,con destinazione piano %i, ora avvio %i, %s\n",
 					nuovo_arrivo->categoriaPersona, numero_piano,
 					nuovo_arrivo->destinazione, tempo_generazione, ctime(&ora));
-			fprintf(logFp,
+			fprintf(log_file,
 					"[GENERATO] %s,con destinazione piano %i, ora avvio %i, %s\n",
 					nuovo_arrivo->categoriaPersona, nuovo_arrivo->destinazione,
 					tempo_generazione, ctime(&ora));
@@ -324,11 +334,11 @@ void server() {
 	close(SocketFd);
 	printf("Server terminato, piano%i\n", numero_piano);
 	ora = time(NULL);
-	fprintf(logFp, "Terminazione piano, %s (%i)\n", ctime(&ora), (int) ora);
-	fclose(logFp);
+	fprintf(log_file, "Terminazione piano, %s (%i)\n", ctime(&ora), (int) ora);
+	fclose(log_file);
 }
 
-void leggi_parametri(int argc, char* argv[]) {
+void leggiArgomenti(int argc, char* argv[]) {
 	if (argc == 1) {
 		printf("Esecuzione con tempo limite di 5 minuti\n");
 		return;
@@ -353,7 +363,7 @@ int main(int argc, char * argv[]) {
 	int pidserver2 = 0;
 	int pidserver3 = 0;
 
-	leggi_parametri(argc, argv);
+	leggiArgomenti(argc, argv);
 
 	tempo_avvio = time(NULL) + 3;
 	int prima_fork = 0;

@@ -2,10 +2,10 @@
 
 #include "persona.h"
 
-Persona creaPersona(char tipo, int destinazione) {
+Persona creaPersona(char categoria, int destinazione) {
 	Persona nuova_persona;
 	nuova_persona.destinazione = destinazione;
-	switch (tipo) {
+	switch (categoria) {
 	case 'A':
 		nuova_persona.categoriaPersona = categoriePersone[0];
 		nuova_persona.peso = 80;
