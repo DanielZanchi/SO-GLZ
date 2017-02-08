@@ -41,7 +41,7 @@ void scriviNelSocket(int SocketFd, const void* buffer, size_t dim) {
 				"Errore invio messaggio socket \"%s\", terminazione al piano %i...\n",
 				SOCKETS_PIANI[numero_piano], numero_piano);
 		perror(msg);
-		exit(36);
+		exit(10);
 	}
 }
 
@@ -53,7 +53,7 @@ void leggiDalSocket(int SocketFd, void* nuovo_arrivo, size_t dim) {
 				"Errore ricezione messaggio socket \"%s\", terminazione al piano %i...\n",
 				SOCKETS_PIANI[numero_piano], numero_piano);
 		perror(msg);
-		exit(36);
+		exit(10);
 	}
 }
 
@@ -75,7 +75,7 @@ void client() {
 				"Impossibile aprire file di input \"%s\", terminazione client, piano %i ",
 				PIANI_FILE_INPUT[numero_piano], numero_piano);
 		perror(msg);
-		exit(-3);
+		exit(20);
 	}
 	long int posizione = 0;
 
@@ -111,7 +111,7 @@ void client() {
 					"Errore durante la creazione del socket \"%s\", terminazione client, piano %i ",
 					SOCKETS_PIANI[numero_piano], numero_piano);
 			perror(msg);
-			exit(76);
+			exit(10);
 		}
 
 		SocketAddress.sun_family = AF_UNIX; /* Set domain type */
@@ -123,7 +123,7 @@ void client() {
 			asprintf(&msg, "Client al piano %i errore connessione", numero_piano);
 			perror(msg);
 			fclose(inputFp);
-			exit(35);
+			exit(12);
 		}
 		char* rigaTmp = riga;
 
@@ -183,7 +183,7 @@ void server() {
 				"Impossibile aprire file di log \"%s\", terminazione server piano %i...",
 				FILES_LOG[numero_piano], numero_piano);
 		perror(msg);
-		exit(-3);
+		exit(20);
 	}
 	fprintf(logFp, "Avviato piano: %s (%i)\n", ctime(&tempo_avvio),
 			(int) tempo_avvio);
@@ -203,25 +203,25 @@ void server() {
 		printf(
 				"Errore durante la creazione del socket \"%s\", terminazione del server, piano %i...",
 				SOCKETS_PIANI[numero_piano], numero_piano);
-		exit(-76);
+		exit(10);
 	}
 	SocketAddress.sun_family = AF_UNIX; /* Set domain type */
 	strcpy(SocketAddress.sun_path, SOCKETS_PIANI[numero_piano]); /* Set name */
-	int result = bind(SocketFd, SocketAddrPtr, SocketLenght);
-	if (SocketFd == -1) {
+	int indirizzo = bind(SocketFd, SocketAddrPtr, SocketLenght);
+	if (indirizzo == -1) {
 		printf(
 				"Errore durante la bind del socket \"%s\", terminazione del server, piano %i...",
 				SOCKETS_PIANI[numero_piano], numero_piano);
 		perror("");
-		exit(-76);
+		exit(10);
 	}
-	result = listen(SocketFd, 2);
-	if (SocketFd == -1) {
+	indirizzo = listen(SocketFd, 2);
+	if (indirizzo == -1) {
 		printf(
 				"Errore durante la listen del socket \"%s\", terminazione del server, piano %i...",
 				SOCKETS_PIANI[numero_piano], numero_piano);
 		perror("");
-		exit(-76);
+		exit(10);
 	}
 
 	while (1) {
@@ -229,7 +229,7 @@ void server() {
 		if (clientFd == -1) {
 			perror("Impossibile effettuare la connessione con i clients");
 			printf("Terminazione del server, piano %i", numero_piano);
-			exit(5);
+			exit(15);
 		}
 		//leggiDalSocket(clientFd, &connessione, sizeof(connessione));
 		read(clientFd, &connessione, sizeof(connessione));
@@ -242,7 +242,7 @@ void server() {
 				printf(
 						"Errore allocazione memoria, terminazione server piano %i...",
 						numero_piano);
-				exit(37);
+				exit(26);
 			}
 
 			leggiDalSocket(clientFd, nuovo_arrivo, sizeof(Persona));

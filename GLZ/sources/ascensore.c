@@ -64,7 +64,7 @@ void scriviNelSocket(int SocketFd, const void* buffer, size_t dim) { // Come in 
 		asprintf(&msg, "Errore durante l'invio, piano %i, terminazione ascensore ",
 				piano);
 		perror(msg);
-		exit(36);
+		exit(10);
 	}
 }
 
@@ -75,7 +75,7 @@ void leggiDalSocket(int SocketFd, void* nuovo_arrivo, size_t dim) {  // Come in 
 		asprintf(&msg, "Errore durante la ricezione, piano %i, terminazione ascensore ",
 				piano);
 		perror(msg);
-		exit(36);
+		exit(10);
 	}
 }
 
@@ -187,7 +187,7 @@ int main(int argc, char *argv[]) {    // Comunica con il Socket- si autentica co
 					SOCKETS_PIANI[piano]);
 			perror(msg);
 			close(SocketFd);
-			exit(34);
+			exit(21);
 		}
 
 		scriviNelSocket(SocketFd, &CONNESSIONE_ASCENSORE,
