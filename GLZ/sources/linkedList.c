@@ -24,7 +24,7 @@ nodo_lista_persone* crea_testa(lista_persone* lista, Persona* persona_da_aggiung
 		return NULL;
 	}
 	nodo->persona = persona_da_aggiungere;
-	nodo->next = NULL;
+	nodo->successivo = NULL;
 
 	lista->head = lista->current = nodo;
 
@@ -44,9 +44,9 @@ nodo_lista_persone* aggiungi_alla_lista(lista_persone* lista,	Persona* persona_d
 
 	nodo->persona = persona_da_aggiungere;
 
-	nodo->next = NULL;
+	nodo->successivo = NULL;
 
-	lista->current->next = nodo;
+	lista->current->successivo = nodo;
 	lista->current = nodo;
 	return nodo;
 }
@@ -63,7 +63,7 @@ nodo_lista_persone* cerca_per_tipo(lista_persone* lista, char *tipo,nodo_lista_p
 			break;
 		} else {
 			tmp = nodo;
-			nodo = nodo->next;
+			nodo = nodo->successivo;
 		}
 	}
 	if (found) {
@@ -84,13 +84,13 @@ void cancella_per_tipo(lista_persone* lista, char *tipo) { //Cancella del tutto 
 
 	if (del) {
 		if (prev != NULL) {
-			prev->next = del->next;
+			prev->successivo = del->successivo;
 		}
 		if (del == lista->current) {
 			lista->current = prev;
 		}
 		if (del == lista->head) {
-			lista->head = del->next;
+			lista->head = del->successivo;
 		}
 		free(del->persona);
 		free(del);
@@ -110,7 +110,7 @@ nodo_lista_persone* cerca_per_destinazione(lista_persone* lista, int destination
 			break;
 		} else {
 			tmp = nodo;
-			nodo = nodo->next;
+			nodo = nodo->successivo;
 		}
 	}
 
@@ -132,13 +132,13 @@ Persona* cancella_scesa(lista_persone* lista, int arrivo) { //Cancella la prima 
 
 	if (del) {
 		if (prev != NULL) {
-			prev->next = del->next;
+			prev->successivo = del->successivo;
 		}
 		if (del == lista->current) {
 			lista->current = prev;
 		}
 		if (del == lista->head) {
-			lista->head = del->next;
+			lista->head = del->successivo;
 
 		}
 		cancellata = del->persona;
