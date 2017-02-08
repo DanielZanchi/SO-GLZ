@@ -93,7 +93,7 @@ int carica_persone(int SocketFd, FILE* logFp) {   // Si occupa di aspettare le p
 		nuovo_arrivo = (Persona*) malloc(sizeof(Persona));
 		//printf("ricezione persona");
 		ricevi_dal_socket(SocketFd, nuovo_arrivo, sizeof(Persona));
-		aggiungi_alla_lista(lista, nuovo_arrivo);
+		aggiungiPersonaLista(lista, nuovo_arrivo);
 
 		//legge dimensione stringa categoriaPersona
 		long unsigned dimensione = 0;
@@ -126,7 +126,7 @@ int carica_persone(int SocketFd, FILE* logFp) {   // Si occupa di aspettare le p
 
 void scarica_persone(FILE* logFp) {   // Come carica persone, ma ne cancella i dati per simulare l'arrivo a destinazione
 	Persona* scesa = NULL;
-	scesa = cancella_scesa(lista, piano);
+	scesa = eliminaDiscesa(lista, piano);
 	while (scesa != NULL) {
 		int tempo_scesa = time(NULL) - tempo_avvio;
 		time_t ora = time( NULL);
@@ -148,7 +148,7 @@ void scarica_persone(FILE* logFp) {   // Come carica persone, ma ne cancella i d
 		}
 		carico = carico - scesa->peso;
 		free(scesa);
-		scesa = cancella_scesa(lista, piano);
+		scesa = eliminaDiscesa(lista, piano);
 	}
 }
 
@@ -158,7 +158,7 @@ int main(int argc, char *argv[]) {    // Comunica con il Socket- si autentica co
 	short piani_terminati[4] = { 0, 0, 0, 0 };
 	int piani_attivi = 4;
 
-	lista = crea_lista_persone();
+	lista = creaListaPersone();
 
 	sleep(4);
 	tempo_avvio = time(NULL);

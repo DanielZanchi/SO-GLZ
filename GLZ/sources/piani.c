@@ -167,7 +167,7 @@ void client() {
 void server() {
 	lista_persone* coda = NULL;
 	nodo_lista_persone* testa = NULL;
-	coda = crea_lista_persone();
+	coda = creaListaPersone();
 
 	FILE* logFp = NULL;
 	Persona* nuovo_arrivo = NULL;
@@ -255,7 +255,7 @@ void server() {
 			nuovo_arrivo->categoriaPersona = (char*) malloc(dimensione);
 			ricevi_dal_socket(clientFd, nuovo_arrivo->categoriaPersona, dimensione);
 
-			aggiungi_alla_lista(coda, nuovo_arrivo);
+			aggiungiPersonaLista(coda, nuovo_arrivo);
 
 			ora = time( NULL);
 			int tempo_generazione = ora - tempo_avvio;
@@ -309,7 +309,7 @@ void server() {
 				invia_nel_socket(clientFd, testa->persona->categoriaPersona,
 						dimensione);
 
-				cancella_per_tipo(coda, testa->persona->categoriaPersona);
+				eliminaPerTipo(coda, testa->persona->categoriaPersona);
 			}
 			close(clientFd);
 		} else {

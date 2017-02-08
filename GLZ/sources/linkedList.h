@@ -16,18 +16,18 @@ typedef struct _lista_persone {
 } lista_persone;
 
 
-lista_persone* crea_lista_persone();
+lista_persone* creaListaPersone();
 
 nodo_lista_persone* getTestaLista(lista_persone* lista);
 
-nodo_lista_persone* aggiungi_alla_lista(lista_persone* lista,
+nodo_lista_persone* aggiungiPersonaLista(lista_persone* lista,
 		Persona* persona_da_aggiungere);
 
-nodo_lista_persone* cerca_per_tipo(lista_persone* lista, char *tipo,
+nodo_lista_persone* ricercaPerTipo(lista_persone* lista, char *tipo,
 		nodo_lista_persone **prev);
 
-void cancella_per_tipo(lista_persone* lista, char *tipo);
+void eliminaPerTipo(lista_persone* lista, char *tipo);
 
-Persona* cancella_scesa(lista_persone* lista, int arrivo);
+Persona* eliminaDiscesa(lista_persone* lista, int arrivo);
 
 #endif /* LINKEDLIST_H_ */
