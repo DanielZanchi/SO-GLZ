@@ -1,13 +1,10 @@
-/*
- * ascensore.c
- *
- *  Created on: 06 giu 2016
- */
+
 #include <sys/socket.h>
 #include <sys/un.h>   /*   Per socket AF_UNIX */
 #include <time.h>
 #include <stdlib.h>
 #include <stdio.h>
+#include <string.h>
 #include <errno.h>
 #include <unistd.h>
 

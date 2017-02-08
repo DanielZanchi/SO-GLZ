@@ -1,8 +1,4 @@
-/*
- * linkedList.c
- *
- *  Created on: 07 giu 2016
- */
+
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -80,7 +76,7 @@ nodo_lista_persone* cerca_per_tipo(lista_persone* lista, char *tipo,nodo_lista_p
 	}
 }
 
-int cancella_per_tipo(lista_persone* lista, char *tipo) { //Cancella del tutto la prima persona del tipo specificato, liberando anche la memoria
+void cancella_per_tipo(lista_persone* lista, char *tipo) { //Cancella del tutto la prima persona del tipo specificato, liberando anche la memoria
 	nodo_lista_persone* prev = NULL;
 	nodo_lista_persone *del = NULL;
 
@@ -99,7 +95,7 @@ int cancella_per_tipo(lista_persone* lista, char *tipo) { //Cancella del tutto l
 		free(del->persona);
 		free(del);
 	} else {
-		return -1;
+		return ;
 	}
 }
 

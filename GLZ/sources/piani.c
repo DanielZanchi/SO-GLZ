@@ -1,8 +1,3 @@
-/*
- * piano0_client.c
- *
- *  Created on: 08 giu 2016
- */
 
 #include <unistd.h> /* write, lseek, close, exit */
 #include <sys/stat.h> /*open */

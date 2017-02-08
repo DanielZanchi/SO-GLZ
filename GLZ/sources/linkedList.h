@@ -1,8 +1,4 @@
-/*
- * linkedList.h
- *
- *  Created on: 07 giu 2016
- */
+
 #include "persona.h"
 #ifndef LINKEDLIST_H_
 #define LINKEDLIST_H_
@@ -22,7 +18,7 @@ nodo_lista_persone* aggiungi_alla_lista(lista_persone* lista,
 		Persona* persona_da_aggiungere);
 nodo_lista_persone* cerca_per_tipo(lista_persone* lista, char *tipo,
 		nodo_lista_persone **prev);
-int cancella_per_tipo(lista_persone* lista, char *tipo);
+void cancella_per_tipo(lista_persone* lista, char *tipo);
 Persona* cancella_scesa(lista_persone* lista, int arrivo);
 
 #endif /* LINKEDLIST_H_ */
