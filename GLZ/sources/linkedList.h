@@ -24,7 +24,7 @@ nodo_lista_persone* aggiungiPersonaLista(lista_persone* lista,
 		Persona* persona_da_aggiungere);
 
 nodo_lista_persone* ricercaPerTipo(lista_persone* lista, char *tipo,
-		nodo_lista_persone **prev);
+		nodo_lista_persone **precedente);
 
 void eliminaPerTipo(lista_persone* lista, char *tipo);
 

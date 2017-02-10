@@ -51,7 +51,7 @@ nodo_lista_persone* aggiungiPersonaLista(lista_persone* lista,	Persona* persona_
 	return nodo;
 }
 
-nodo_lista_persone* ricercaPerTipo(lista_persone* lista, char *tipo,nodo_lista_persone **prev) { //Restituisce il primo puntatore relativo al tipo di persona trovata, salvando il precedente nodo in prev
+nodo_lista_persone* ricercaPerTipo(lista_persone* lista, char *tipo,nodo_lista_persone **precedente) { //Restituisce il primo puntatore relativo al tipo di persona trovata, salvando il precedente nodo in precedente
 	nodo_lista_persone *nodo = lista->testaLista;
 	nodo_lista_persone *tmp = NULL;
 
@@ -67,8 +67,8 @@ nodo_lista_persone* ricercaPerTipo(lista_persone* lista, char *tipo,nodo_lista_p
 		}
 	}
 	if (found) {
-		if (prev) {
-			*prev = tmp;
+		if (precedente) {
+			*precedente = tmp;
 		}
 		return nodo;
 	} else {
@@ -77,17 +77,17 @@ nodo_lista_persone* ricercaPerTipo(lista_persone* lista, char *tipo,nodo_lista_p
 }
 
 void eliminaPerTipo(lista_persone* lista, char *tipo) { //Cancella del tutto la prima persona del tipo specificato, liberando anche la memoria
-	nodo_lista_persone* prev = NULL;
+	nodo_lista_persone* precedente = NULL;
 	nodo_lista_persone *del = NULL;
 
-	del = ricercaPerTipo(lista, tipo, &prev);
+	del = ricercaPerTipo(lista, tipo, &precedente);
 
 	if (del) {
-		if (prev != NULL) {
-			prev->successivo = del->successivo;
+		if (precedente != NULL) {
+			precedente->successivo = del->successivo;
 		}
 		if (del == lista->elementoCorrente) {
-			lista->elementoCorrente = prev;
+			lista->elementoCorrente = precedente;
 		}
 		if (del == lista->testaLista) {
 			lista->testaLista = del->successivo;
@@ -99,7 +99,7 @@ void eliminaPerTipo(lista_persone* lista, char *tipo) { //Cancella del tutto la 
 	}
 }
 
-nodo_lista_persone* ricercaPerDestinazione(lista_persone* lista, int destination, nodo_lista_persone** prev) { //Restituisce la prima persona trovata con destinazione uguale a "destination", aggiorna anche "prev"
+nodo_lista_persone* ricercaPerDestinazione(lista_persone* lista, int destination, nodo_lista_persone** precedente) { //Restituisce la prima persona trovata con destinazione uguale a "destinazione", aggiorna anche "precedente"
 	nodo_lista_persone *nodo = lista->testaLista;
 	nodo_lista_persone *tmp = NULL;
 	int found = 0;
@@ -115,8 +115,8 @@ nodo_lista_persone* ricercaPerDestinazione(lista_persone* lista, int destination
 	}
 
 	if (found) {
-		if (prev) {
-			*prev = tmp;
+		if (precedente) {
+			*precedente = tmp;
 		}
 		return nodo;
 	} else {
@@ -124,18 +124,18 @@ nodo_lista_persone* ricercaPerDestinazione(lista_persone* lista, int destination
 	}
 }
 Persona* eliminaDiscesa(lista_persone* lista, int arrivo) { //Cancella la prima occorrenza che ha destinazione uguale ad "arrivo", restituisce il puntatore al nodo appena eliminato
-	nodo_lista_persone *prev = NULL;
+	nodo_lista_persone *precedente = NULL;
 	nodo_lista_persone *del = NULL;
 	Persona* cancellata = NULL;
 
-	del = ricercaPerDestinazione(lista, arrivo, &prev);
+	del = ricercaPerDestinazione(lista, arrivo, &precedente);
 
 	if (del) {
-		if (prev != NULL) {
-			prev->successivo = del->successivo;
+		if (precedente != NULL) {
+			precedente->successivo = del->successivo;
 		}
 		if (del == lista->elementoCorrente) {
-			lista->elementoCorrente = prev;
+			lista->elementoCorrente = precedente;
 		}
 		if (del == lista->testaLista) {
 			lista->testaLista = del->successivo;
