@@ -268,16 +268,14 @@ void scriviNelSocket(int SocketFd, const void* buffer, size_t dim) {
 														aggiungiPersonaLista(coda, nuovo_arrivo);
 
 														ora = time( NULL);
-														int tempo_generazione = ora - tempo_avvio;
-
 														printf(
-															"[GENERATO] %s al piano %i,con destinazione piano %i, ora avvio %i, %s\n",
+															"[GENERATO] %s al piano %i,con destinazione piano %i, %s\n",
 															nuovo_arrivo->categoriaPersona, numero_piano,
-															nuovo_arrivo->destinazione, tempo_generazione, ctime(&ora));
+															nuovo_arrivo->destinazione, ctime(&ora));
 															fprintf(log_file,
-																"[GENERATO] %s,con destinazione piano %i, ora avvio %i, %s\n",
+																"[GENERATO] %s,con destinazione piano %i, %s\n",
 																nuovo_arrivo->categoriaPersona, nuovo_arrivo->destinazione,
-																tempo_generazione, ctime(&ora));
+																ctime(&ora));
 
 															} else if (connessione == CONNESSIONE_ASCENSORE) {// si e' connesso l'ascensore
 															printf("Connessione del server piano %i, connessione ascensore\n", numero_piano);
@@ -395,7 +393,7 @@ void scriviNelSocket(int SocketFd, const void* buffer, size_t dim) {
 																pid = fork();
 																time_t now = time(NULL);
 																tempo_terminazione = now + (DURATA_MAX_MINUTI * 60);
-
+																// se il pid == 0, quindi è un nuovo server allora esso sarà un client, altrimenti server
 																if (!pid) {
 																	sleep(tempo_avvio - now + 2);
 																	tempo_avvio = time(NULL);
@@ -404,6 +402,7 @@ void scriviNelSocket(int SocketFd, const void* buffer, size_t dim) {
 																	sleep(tempo_avvio - now);
 																	tempo_avvio = time(NULL) + 2;
 																	server();
+
 																	//aspetta terminazione del piano client corrispondente
 																	waitpid(pid, &status, 0);
 																}

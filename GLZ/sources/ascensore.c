@@ -1,4 +1,3 @@
-
 #include <sys/socket.h>
 #include <sys/un.h>   /*   Per socket AF_UNIX */
 #include <time.h>
@@ -30,7 +29,7 @@ enum terminazione {
 static const int CONNESSIONE_ASCENSORE = 0;
 
 static const char* SOCKETS_PIANI[4] = { "piano0.sock", "piano1.sock",
-		"piano2.sock", "piano3.sock" };
+"piano2.sock", "piano3.sock" };
 
 lista_persone* lista = NULL;
 int carico = 0;
@@ -40,21 +39,21 @@ int contatore_adulti = 0;
 int contatore_addetti_consegne = 0;
 
 void spostamentoAscensore() {  // L'ascensore si sposta di un piano in base alla direzione corrente
-	if (direzione == ALTO) {
-		if (piano == piano3) {
-			direzione = BASSO;
-			piano--;
-		} else {
-			piano++;
-		}
+if (direzione == ALTO) {
+	if (piano == piano3) {
+		direzione = BASSO;
+		piano--;
 	} else {
-		if (piano == piano0) {
-			direzione = ALTO;
-			piano++;
-		} else {
-			piano--;
-		}
+		piano++;
 	}
+} else {
+	if (piano == piano0) {
+		direzione = ALTO;
+		piano++;
+	} else {
+		piano--;
+	}
+}
 }
 
 void scriviNelSocket(int SocketFd, const void* buffer, size_t dim) { // Come in piani.c
@@ -62,7 +61,7 @@ void scriviNelSocket(int SocketFd, const void* buffer, size_t dim) { // Come in 
 	if (scritto < dim) {
 		char* msg;
 		asprintf(&msg, "Errore durante l'invio, piano %i, terminazione ascensore ",
-				piano);
+		piano);
 		perror(msg);
 		exit(10);
 	}
@@ -73,76 +72,74 @@ void leggiDalSocket(int SocketFd, void* nuovo_arrivo, size_t dim) {  // Come in 
 	if (letto < 0) {
 		char* msg;
 		asprintf(&msg, "Errore durante la ricezione, piano %i, terminazione ascensore ",
-				piano);
+		piano);
 		perror(msg);
 		exit(10);
 	}
 }
 
 int salitaPersone(int SocketFd, FILE* logFp) {   // Si occupa di aspettare le persone e registrarne i dati nel file di LOG, aggiorna l'ascensore
-	int persona_presente = 0;
+int persona_presente = 0;
 
-	leggiDalSocket(SocketFd, &persona_presente, sizeof(int));
-	if (!persona_presente) {
-		return 0;
-	}
-
-	Persona* nuovo_arrivo = (Persona*) malloc(sizeof(Persona));
-	int contatore_caricate = 0;
-	while (persona_presente) {
-		nuovo_arrivo = (Persona*) malloc(sizeof(Persona));
-		//printf("ricezione persona");
-		leggiDalSocket(SocketFd, nuovo_arrivo, sizeof(Persona));
-		aggiungiPersonaLista(lista, nuovo_arrivo);
-
-		//legge dimensione stringa categoriaPersona
-		long unsigned dimensione = 0;
-		//printf("ricezione dimensione");
-		leggiDalSocket(SocketFd, &dimensione, sizeof(dimensione));
-		nuovo_arrivo->categoriaPersona = (char*) malloc(dimensione);
-
-		//legge la stringa nome tipo
-		//printf("ricezione tipo");
-		leggiDalSocket(SocketFd, nuovo_arrivo->categoriaPersona, dimensione);
-
-		int tempo_generazione = time(NULL) - tempo_avvio;
-		time_t ora = time( NULL);
-		printf(
-				"[SALITA] %s al piano %i, con destinazione %i, tempo avvio %i, %s\n",
-				nuovo_arrivo->categoriaPersona, piano, nuovo_arrivo->destinazione,
-				tempo_generazione, ctime(&ora));
-		fprintf(logFp,
-				"[SALITA] %s al piano %i, con destinazione %i, tempo avvio %i, %s\n",
-				nuovo_arrivo->categoriaPersona, piano, nuovo_arrivo->destinazione,
-				tempo_generazione, ctime(&ora));
-
-		carico = carico + nuovo_arrivo->peso;
-		contatore_caricate++;
-
-		leggiDalSocket(SocketFd, &persona_presente, sizeof(int));
-	}
-	return contatore_caricate;
+leggiDalSocket(SocketFd, &persona_presente, sizeof(int));
+if (!persona_presente) {
+	return 0;
 }
 
-void discesaPersone(FILE* logFp) {   // Come carica persone, ma ne cancella i dati per simulare l'arrivo a destinazione
+Persona* nuovo_arrivo = (Persona*) malloc(sizeof(Persona));
+int contatore_caricate = 0;
+while (persona_presente) {
+	nuovo_arrivo = (Persona*) malloc(sizeof(Persona));
+	//printf("ricezione persona");
+	leggiDalSocket(SocketFd, nuovo_arrivo, sizeof(Persona));
+	aggiungiPersonaLista(lista, nuovo_arrivo);
+
+	//legge dimensione stringa categoriaPersona
+	long unsigned dimensione = 0;
+	//printf("ricezione dimensione");
+	leggiDalSocket(SocketFd, &dimensione, sizeof(dimensione));
+	nuovo_arrivo->categoriaPersona = (char*) malloc(dimensione);
+
+	//legge la stringa nome tipo
+	//printf("ricezione tipo");
+	leggiDalSocket(SocketFd, nuovo_arrivo->categoriaPersona, dimensione);
+
+	time_t ora = time( NULL);
+	printf(
+		"[SALITA] %s al piano %i, con destinazione %i, %s\n",
+		nuovo_arrivo->categoriaPersona, piano, nuovo_arrivo->destinazione,
+		ctime(&ora));
+		fprintf(logFp,
+			"[SALITA] %s al piano %i, con destinazione %i, %s\n",
+			nuovo_arrivo->categoriaPersona, piano, nuovo_arrivo->destinazione,
+			ctime(&ora));
+
+			carico = carico + nuovo_arrivo->peso;
+			contatore_caricate++;
+
+			leggiDalSocket(SocketFd, &persona_presente, sizeof(int));
+		}
+		return contatore_caricate;
+	}
+
+	void discesaPersone(FILE* logFp) {   // Come carica persone, ma ne cancella i dati per simulare l'arrivo a destinazione
 	Persona* scesa = NULL;
 	scesa = eliminaDiscesa(lista, piano);
 	while (scesa != NULL) {
-		int tempo_scesa = time(NULL) - tempo_avvio;
 		time_t ora = time( NULL);
-		printf("[DISCESA] %s al piano %i, tempo avvio %i, %s\n",
-				scesa->categoriaPersona, piano, tempo_scesa, ctime(&ora));
-		fprintf(logFp, "[DISCESA] %s al piano %i, tempo avvio %i, %s\n",
-				scesa->categoriaPersona, piano, tempo_scesa, ctime(&ora));
+		printf("[DISCESA] %s al piano %i, %s\n",
+		scesa->categoriaPersona, piano, ctime(&ora));
+		fprintf(logFp, "[DISCESA] %s al piano %i, %s\n",
+		scesa->categoriaPersona, piano, ctime(&ora));
 
 		switch(scesa->peso){
-		case 80:
+			case 80:
 			contatore_adulti++;
 			break;
-		case 40:
+			case 40:
 			contatore_bambini++;
 			break;
-		case 90:
+			case 90:
 			contatore_addetti_consegne++;
 			break;
 		}
@@ -184,79 +181,80 @@ int main(int argc, char *argv[]) {    // Comunica con il Socket- si autentica co
 		if (connesso == -1) {
 			char* msg;
 			asprintf(&msg, "Ascensore NON CONNESSO tramite socket \"%s\"\n",
-					SOCKETS_PIANI[piano]);
+			SOCKETS_PIANI[piano]);
 			perror(msg);
 			close(SocketFd);
 			exit(21);
 		}
 
 		scriviNelSocket(SocketFd, &CONNESSIONE_ASCENSORE,
-				sizeof(CONNESSIONE_ASCENSORE));
+			sizeof(CONNESSIONE_ASCENSORE));
 
-		peso_massimo_imbarcabile = PESO_MASSIMO - carico;
-		scriviNelSocket(SocketFd, &peso_massimo_imbarcabile, sizeof(int));
+			peso_massimo_imbarcabile = PESO_MASSIMO - carico;
+			scriviNelSocket(SocketFd, &peso_massimo_imbarcabile, sizeof(int));
 
-		persone_caricate = salitaPersone(SocketFd, logFp);
-		close(SocketFd);
-		usleep(10000);
-	} while (persone_caricate == 0);
+			persone_caricate = salitaPersone(SocketFd, logFp);
+			close(SocketFd);
+			usleep(10000);
+		} while (persone_caricate == 0);
 
-	printf("Carico dell'ascensore = %i\n", carico);
-
-	while (1) {
-		spostamentoAscensore();
-		sleep(TEMPO_SPOSTAMENTO);
-		printf("Ascensore arrivato al piano %i\n", piano);
-		sleep(TEMPO_SOSTA);
-		discesaPersone(logFp);
-		int SocketFd, SocketLenght, tempo;
-		struct sockaddr_un SocketAddress;
-		struct sockaddr* SocketAddrPtr;
-
-		SocketAddrPtr = (struct sockaddr*) &SocketAddress;
-		SocketLenght = sizeof(SocketAddress);
-
-		/* Create a UNIX socket, bidirectional, default protocol */
-		SocketFd = socket(AF_UNIX, SOCK_STREAM, DEFAULT_PROTOCOL);
-		SocketAddress.sun_family = AF_UNIX; /* Set domain type */
-		strcpy(SocketAddress.sun_path, SOCKETS_PIANI[piano]); /* Set name */
-		int connesso = connect(SocketFd, SocketAddrPtr, SocketLenght);
-
-		if (connesso != 0) {
-			if (piani_terminati[piano]) {
-				if (piani_non_terminati == 0) {
-					close(SocketFd);
-					break;
-				}
-				continue;
-			} else {
-				piani_non_terminati--;
-				piani_terminati[piano] = 1;
-				continue;
-			}
-		} else {
-			printf("Connessione tramite \"%s\"\n", SOCKETS_PIANI[piano]);
-		}
-
-		scriviNelSocket(SocketFd, &CONNESSIONE_ASCENSORE,
-				sizeof(CONNESSIONE_ASCENSORE));
-
-		peso_massimo_imbarcabile = PESO_MASSIMO - carico;
-		scriviNelSocket(SocketFd, &peso_massimo_imbarcabile, sizeof(int));
-
-		persone_caricate = salitaPersone(SocketFd, logFp);
 		printf("Carico dell'ascensore = %i\n", carico);
-		close(SocketFd);
-	}
-	printf("Terminazione ascensore...\n");
-	time_t tempo_terminazione = time(NULL);
-	fprintf(logFp, "Terminazione ascensore %s (%i)\n",
+
+		while (1) {
+			spostamentoAscensore();
+			sleep(TEMPO_SPOSTAMENTO);
+			time_t ora = time(NULL);
+			printf("[FERMATA] Piano %i, %s\n", piano, ctime(&ora));
+			sleep(TEMPO_SOSTA);
+			discesaPersone(logFp);
+			int SocketFd, SocketLenght, tempo;
+			struct sockaddr_un SocketAddress;
+			struct sockaddr* SocketAddrPtr;
+
+			SocketAddrPtr = (struct sockaddr*) &SocketAddress;
+			SocketLenght = sizeof(SocketAddress);
+
+			/* Create a UNIX socket, bidirectional, default protocol */
+			SocketFd = socket(AF_UNIX, SOCK_STREAM, DEFAULT_PROTOCOL);
+			SocketAddress.sun_family = AF_UNIX; /* Set domain type */
+			strcpy(SocketAddress.sun_path, SOCKETS_PIANI[piano]); /* Set name */
+			int connesso = connect(SocketFd, SocketAddrPtr, SocketLenght);
+
+			if (connesso != 0) {
+				if (piani_terminati[piano]) {
+					if (piani_non_terminati == 0) {
+						close(SocketFd);
+						break;
+					}
+					continue;
+				} else {
+					piani_non_terminati--;
+					piani_terminati[piano] = 1;
+					continue;
+				}
+			} else {
+				printf("Connessione tramite \"%s\"\n", SOCKETS_PIANI[piano]);
+			}
+
+			scriviNelSocket(SocketFd, &CONNESSIONE_ASCENSORE,
+				sizeof(CONNESSIONE_ASCENSORE));
+
+				peso_massimo_imbarcabile = PESO_MASSIMO - carico;
+				scriviNelSocket(SocketFd, &peso_massimo_imbarcabile, sizeof(int));
+
+				persone_caricate = salitaPersone(SocketFd, logFp);
+				printf("Carico dell'ascensore = %i\n", carico);
+				close(SocketFd);
+			}
+			printf("Terminazione ascensore...\n");
+			time_t tempo_terminazione = time(NULL);
+			fprintf(logFp, "Terminazione ascensore %s (%i)\n",
 			ctime(&tempo_terminazione), (int) tempo_terminazione);
-	char* msg;
-	asprintf(&msg, "Resoconto attivita giornaliera:\nPersone servite %i\nBambini %i\nAdulti %i\nAddetti alle consegne %i\n",
+			char* msg;
+			asprintf(&msg, "Resoconto attivita giornaliera:\nPersone servite %i\nBambini %i\nAdulti %i\nAddetti alle consegne %i\n",
 			contatore_bambini + contatore_adulti + contatore_addetti_consegne, contatore_bambini, contatore_adulti, contatore_addetti_consegne);
-	printf("%s", msg);
-	fprintf(logFp, "%s", msg);
-	fclose(logFp);
-	return 0;
-}
+			printf("%s", msg);
+			fprintf(logFp, "%s", msg);
+			fclose(logFp);
+			return 0;
+		}
