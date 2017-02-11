@@ -19,23 +19,26 @@
 static const int CONNESSIONE_PIANO_CLIENT = 1;
 static const int CONNESSIONE_ASCENSORE = 0;
 
+
 static const char* SOCKETS_PIANI[4] = { "piano0.sock", "piano1.sock",
 "piano2.sock", "piano3.sock" };
 static const char* PIANI_FILE_INPUT[4] =
 { "piano0", "piano1", "piano2", "piano3" };
 static const char* FILES_LOG[4] = { "piano0.log", "piano1.log",
 "piano2.log", "piano3.log" };
+
 time_t tempo_avvio;
 time_t tempo_terminazione;
-int numero_piano;
 
 enum terminazione {
 	cinque_minuti, fine_servizio
 } terminazione = cinque_minuti;
 
-void scriviNelSocket(int SocketFd, const void* buffer, size_t dim) {
-	int scritto = write(SocketFd, buffer, dim);
-	if (scritto < dim) {
+int numero_piano;
+
+void scriviNelSocket(int SocketFd, const void* buffer, size_t size) {
+	int scritto = write(SocketFd, buffer, size);
+	if (scritto < size) {
 		char* msg;
 		asprintf(&msg,
 			"Errore invio messaggio socket \"%s\", terminazione al piano %i...\n",
@@ -45,8 +48,8 @@ void scriviNelSocket(int SocketFd, const void* buffer, size_t dim) {
 		}
 	}
 
-	void leggiDalSocket(int SocketFd, void* nuovo_arrivo, size_t dim) {
-		int letto = read(SocketFd, nuovo_arrivo, dim);
+	void leggiDalSocket(int SocketFd, void* nuovo_arrivato, size_t size) {
+		int letto = read(SocketFd, nuovo_arrivato, size);
 		if (letto < 0) {
 			char* msg;
 			asprintf(&msg,
@@ -59,10 +62,12 @@ void scriviNelSocket(int SocketFd, const void* buffer, size_t dim) {
 
 		void client() {
 			char* categoria = NULL;
+
 			char* tempo_generazione = NULL;
 			int tempo_generazione_intero = 0;
+
 			char* destinazione = NULL;
-			int destinazione_int = 0;
+			int destinazione_intero = 0;
 
 			FILE * input_file_piani = NULL;
 
@@ -81,9 +86,9 @@ void scriviNelSocket(int SocketFd, const void* buffer, size_t dim) {
 
 				while (1) {
 					char* riga_corrente = NULL;
-					size_t lunghezza = 0;
 					int presente = 0;
 					int tempo;
+					size_t lunghezza = 0;
 
 					//legge una riga dal file di input e genera la persona
 					//se la riga e' vuota, termina
@@ -97,7 +102,6 @@ void scriviNelSocket(int SocketFd, const void* buffer, size_t dim) {
 							perror(msg);
 							exit(20);
 						}
-
 
 						if (strcmp(riga_corrente, "\n") == 0) {
 							printf(
@@ -142,15 +146,14 @@ void scriviNelSocket(int SocketFd, const void* buffer, size_t dim) {
 								destinazione = strsep(&riga_temp, " ");
 
 								tempo_generazione_intero = atoi(tempo_generazione);
-								destinazione_int = atoi(destinazione);
+								destinazione_intero = atoi(destinazione);
 
-								Persona persona = creaPersona(categoria[0], destinazione_int);
+								Persona persona = creaPersona(categoria[0], destinazione_intero);
 								free(riga_corrente);
 								tempo = time(NULL);
 								sleep(tempo_generazione_intero - (tempo - tempo_avvio));
 
-								scriviNelSocket(SocketFd, &CONNESSIONE_PIANO_CLIENT,
-									sizeof(CONNESSIONE_PIANO_CLIENT));
+								scriviNelSocket(SocketFd, &CONNESSIONE_PIANO_CLIENT,sizeof(CONNESSIONE_PIANO_CLIENT));
 
 									long unsigned dimensione = sizeof(persona);
 									//invia la persona
@@ -175,15 +178,14 @@ void scriviNelSocket(int SocketFd, const void* buffer, size_t dim) {
 							}
 
 							void server() {
+								time_t ora;
 								lista_persone* coda = NULL;
 								nodo_lista_persone* testa = NULL;
-								coda = creaListaPersone();
-
 								FILE* log_file = NULL;
-								Persona* nuovo_arrivo = NULL;
+								Persona* nuovo_arrivato = NULL;
 								int connessione = -1;
-								time_t ora;
 
+								coda = creaListaPersone();
 								log_file = fopen(FILES_LOG[numero_piano], "w");
 
 								printf("Start server, piano%i\n", numero_piano);
@@ -195,6 +197,7 @@ void scriviNelSocket(int SocketFd, const void* buffer, size_t dim) {
 										perror(msg);
 										exit(20);
 									}
+
 									fprintf(log_file, "Avviato piano: %s (%i)\n", ctime(&tempo_avvio),
 									(int) tempo_avvio);
 
@@ -247,34 +250,34 @@ void scriviNelSocket(int SocketFd, const void* buffer, size_t dim) {
 													if (connessione == CONNESSIONE_PIANO_CLIENT) {// si e' connesso un piano-client
 													printf("Connessione server piano %i, con piano client\n", numero_piano);
 
-													nuovo_arrivo = (Persona*) malloc(sizeof(Persona));
-													if (nuovo_arrivo == NULL) {
+													nuovo_arrivato = (Persona*) malloc(sizeof(Persona));
+													if (nuovo_arrivato == NULL) {
 														printf(
 															"Errore allocazione memoria, terminazione server piano %i...",
 															numero_piano);
 															exit(26);
 														}
 
-														leggiDalSocket(clientFd, nuovo_arrivo, sizeof(Persona));
+														leggiDalSocket(clientFd, nuovo_arrivato, sizeof(Persona));
 
 														//legge lunghezza striga categoriaPersona
 														long unsigned dimensione = 0;
 														leggiDalSocket(clientFd, &dimensione, sizeof(dimensione));
 
 														//legge stringa categoriaPersona
-														nuovo_arrivo->categoriaPersona = (char*) malloc(dimensione);
-														leggiDalSocket(clientFd, nuovo_arrivo->categoriaPersona, dimensione);
+														nuovo_arrivato->categoriaPersona = (char*) malloc(dimensione);
+														leggiDalSocket(clientFd, nuovo_arrivato->categoriaPersona, dimensione);
 
-														aggiungiPersonaLista(coda, nuovo_arrivo);
+														aggiungiPersonaLista(coda, nuovo_arrivato);
 
 														ora = time( NULL);
 														printf(
 															"[GENERATO] %s al piano %i,con destinazione piano %i, %s\n",
-															nuovo_arrivo->categoriaPersona, numero_piano,
-															nuovo_arrivo->destinazione, ctime(&ora));
+															nuovo_arrivato->categoriaPersona, numero_piano,
+															nuovo_arrivato->destinazione, ctime(&ora));
 															fprintf(log_file,
 																"[GENERATO] %s,con destinazione piano %i, %s\n",
-																nuovo_arrivo->categoriaPersona, nuovo_arrivo->destinazione,
+																nuovo_arrivato->categoriaPersona, nuovo_arrivato->destinazione,
 																ctime(&ora));
 
 															} else if (connessione == CONNESSIONE_ASCENSORE) {// si e' connesso l'ascensore

@@ -15,18 +15,20 @@
 #define TEMPO_SOSTA 3
 #define TEMPO_SPOSTAMENTO 3
 
-enum direzione {
-	ALTO, BASSO
-} direzione;
-enum piano {
-	piano0, piano1, piano2, piano3
-} piano;
+static const int CONNESSIONE_ASCENSORE = 0;
 
 enum terminazione {
 	cinque_minuti, fine_file
 } terminazione;
 
-static const int CONNESSIONE_ASCENSORE = 0;
+enum direzione {
+	ALTO, BASSO
+} direzione;
+
+enum piano {
+	piano0, piano1, piano2, piano3
+} piano;
+
 
 static const char* SOCKETS_PIANI[4] = { "piano0.sock", "piano1.sock",
 "piano2.sock", "piano3.sock" };
@@ -56,9 +58,9 @@ if (direzione == ALTO) {
 }
 }
 
-void scriviNelSocket(int SocketFd, const void* buffer, size_t dim) { // Come in piani.c
-	int scritto = write(SocketFd, buffer, dim);
-	if (scritto < dim) {
+void scriviNelSocket(int SocketFd, const void* buffer, size_t size) { // Come in piani.c
+	int scritto = write(SocketFd, buffer, size);
+	if (scritto < size) {
 		char* msg;
 		asprintf(&msg, "Errore durante l'invio, piano %i, terminazione ascensore ",
 		piano);
@@ -67,8 +69,8 @@ void scriviNelSocket(int SocketFd, const void* buffer, size_t dim) { // Come in 
 	}
 }
 
-void leggiDalSocket(int SocketFd, void* nuovo_arrivo, size_t dim) {  // Come in piani.c
-	int letto = read(SocketFd, nuovo_arrivo, dim);
+void leggiDalSocket(int SocketFd, void* nuovo_arrivato, size_t size) {  // Come in piani.c
+	int letto = read(SocketFd, nuovo_arrivato, size);
 	if (letto < 0) {
 		char* msg;
 		asprintf(&msg, "Errore durante la ricezione, piano %i, terminazione ascensore ",
@@ -86,35 +88,36 @@ if (!persona_presente) {
 	return 0;
 }
 
-Persona* nuovo_arrivo = (Persona*) malloc(sizeof(Persona));
+Persona* nuovo_arrivato = (Persona*) malloc(sizeof(Persona));
 int contatore_caricate = 0;
 while (persona_presente) {
-	nuovo_arrivo = (Persona*) malloc(sizeof(Persona));
+	nuovo_arrivato = (Persona*) malloc(sizeof(Persona));
 	//printf("ricezione persona");
-	leggiDalSocket(SocketFd, nuovo_arrivo, sizeof(Persona));
-	aggiungiPersonaLista(lista, nuovo_arrivo);
+	leggiDalSocket(SocketFd, nuovo_arrivato, sizeof(Persona));
+	aggiungiPersonaLista(lista, nuovo_arrivato);
 
 	//legge dimensione stringa categoriaPersona
 	long unsigned dimensione = 0;
 	//printf("ricezione dimensione");
 	leggiDalSocket(SocketFd, &dimensione, sizeof(dimensione));
-	nuovo_arrivo->categoriaPersona = (char*) malloc(dimensione);
+	nuovo_arrivato->categoriaPersona = (char*) malloc(dimensione);
 
 	//legge la stringa nome tipo
 	//printf("ricezione tipo");
-	leggiDalSocket(SocketFd, nuovo_arrivo->categoriaPersona, dimensione);
+	leggiDalSocket(SocketFd, nuovo_arrivato->categoriaPersona, dimensione);
 
 	time_t ora = time( NULL);
+
 	printf(
 		"[SALITA] %s al piano %i, con destinazione %i, %s\n",
-		nuovo_arrivo->categoriaPersona, piano, nuovo_arrivo->destinazione,
+		nuovo_arrivato->categoriaPersona, piano, nuovo_arrivato->destinazione,
 		ctime(&ora));
 		fprintf(logFp,
 			"[SALITA] %s al piano %i, con destinazione %i, %s\n",
-			nuovo_arrivo->categoriaPersona, piano, nuovo_arrivo->destinazione,
+			nuovo_arrivato->categoriaPersona, piano, nuovo_arrivato->destinazione,
 			ctime(&ora));
 
-			carico = carico + nuovo_arrivo->peso;
+			carico = carico + nuovo_arrivato->peso;
 			contatore_caricate++;
 
 			leggiDalSocket(SocketFd, &persona_presente, sizeof(int));
@@ -150,10 +153,10 @@ while (persona_presente) {
 }
 
 int main(int argc, char *argv[]) {    // Comunica con il Socket- si autentica con il Server - Carica e Scarica persone
-	int peso_massimo_imbarcabile = PESO_MASSIMO;
-	piano = 0;
 	short piani_terminati[4] = { 0, 0, 0, 0 };
 	int piani_non_terminati = 4;
+	int peso_massimo_imbarcabile = PESO_MASSIMO;
+	piano = 0;
 
 	lista = creaListaPersone();
 
