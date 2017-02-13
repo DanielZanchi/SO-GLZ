@@ -1,5 +1,3 @@
-
-
 #include "persona.h"
 
 Persona creaPersona(char categoria, int destinazione) {

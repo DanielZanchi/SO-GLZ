@@ -1,4 +1,3 @@
-
 #include <unistd.h> /* write, lseek, close, exit */
 #include <sys/stat.h> /*open */
 #include <fcntl.h> /*open*/
@@ -344,15 +343,15 @@ void scriviNelSocket(int SocketFd, const void* buffer, size_t size) {
 															printf("Esecuzione con tempo limite di 5 minuti\n");
 															return;
 														}
-														if (argc == 2 && strcmp(argv[1], "--fine-servizio") == 0) {
+														if (argc == 2 && strcmp(argv[1], "-termina") == 0) {
 															terminazione = fine_servizio;
 															printf(
 																"Esecuzione senza tempo limite, fino alla fine del servizio\n");
 															} else {
 																printf(
-																	"Uso: %s [--fine-servizio]\nIl programma termina dopo 5 minuti dall'avvio.\n"
-																	"--fine-servizio: il programma termina solo quando ha terminato di servire i passeggeri\n",
-																	argv[0]);
+																	"Uso:\n%s: Il programma termina dopo 5 minuti dall'avvio.\n"
+																	"%s -termina: Il programma prosegue fino a quando non ha finito di servire i passeggeri.\n",
+																	argv[0], argv[0]);
 																	exit(1);
 																}
 															}
