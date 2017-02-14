@@ -2,9 +2,9 @@
 #define PERSONA_H_
 
 typedef struct _persona {
-	char* categoriaPersona;
-	int peso;
-	int destinazione;
+    char* categoriaPersona;
+    int peso;
+    int destinazione;
 } Persona;
 
 static char *categoriePersone[3] = { "Adulto", "Bambino", "Addetto alla consegna" };

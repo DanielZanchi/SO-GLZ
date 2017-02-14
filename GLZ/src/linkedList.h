@@ -5,13 +5,13 @@
 typedef struct _nodo_lista_persone nodo_lista_persone;
 
 typedef struct _nodo_lista_persone {
-	Persona* persona;
-	nodo_lista_persone* successivo;
+    Persona* persona;
+    nodo_lista_persone* successivo;
 } nodo_lista_persone;
 
 typedef struct _lista_persone {
-	nodo_lista_persone* testaLista;
-	nodo_lista_persone* elementoCorrente;
+    nodo_lista_persone* testaLista;
+    nodo_lista_persone* elementoCorrente;
 } lista_persone;
 
 lista_persone* creaListaPersone();
