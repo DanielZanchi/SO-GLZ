@@ -1,0 +1,18 @@
+language: java
+jdk:
+  - oraclejdk8
+services:
+  - docker
+cache:
+  directories:
+  - $HOME/.m2
+install:
+ - docker pull mongo
+script:
+ - mvn -f com.unifi.fattureApp/pom.xml clean verify
+ 
+ notifications:
+  slack:
+    on_success: never
+    on_failure: never
+  email: false
